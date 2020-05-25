@@ -1,4 +1,4 @@
-(ns poker.util
+(ns poker.logic.util
   "The poker.util namespace contains functions that are used in multiple namespaces to avoid cyclic references.")
 
 (defn compare-desc

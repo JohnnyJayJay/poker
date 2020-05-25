@@ -1,9 +1,9 @@
-(ns poker.state
+(ns poker.logic.state
   "The poker.state namespace contains a multimethod to transition between states of a poker game,
   e.g. moving to the next betting round or evaluating the results."
-  (:require [poker.hands :as hands]
-            [poker.pots :as pots]
-            [poker.util :refer [highest all-in?]]))
+  (:require [poker.logic.hands :as hands]
+            [poker.logic.pots :as pots]
+            [poker.logic.util :refer [highest all-in?]]))
 
 (defn- round-end?
   "Returns whether the current betting round has ended.

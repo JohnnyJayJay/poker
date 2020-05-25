@@ -5,4 +5,4 @@
             :url "https://firstdonoharm.dev/version/2/1/license.html"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/math.combinatorics "0.1.6"]]
-  :repl-options {:init-ns poker.game})
+  :repl-options {:init-ns poker.logic.game})

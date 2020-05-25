@@ -1,7 +1,7 @@
-(ns poker.pots
+(ns poker.logic.pots
   "The poker.pots namespace contains a function to calculate poker pots at the end of a round.
   The last pot is considered to be the current pot."
-  (:require [poker.util :refer [all-in? highest-bet]]))
+  (:require [poker.logic.util :refer [all-in? highest-bet]]))
 
 (defn- update-bets
   "Updates all round bets in the game using the given function."

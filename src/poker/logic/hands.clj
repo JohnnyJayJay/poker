@@ -1,10 +1,10 @@
-(ns poker.hands
+(ns poker.logic.hands
   "The poker.hands namespace contains functions to evaluate and compare
   poker hands (collections of 5 cards). The hand-matching functions generally
   return the given hand in an appropriate order if it matches and nil otherwise."
   (:require [clojure.math.combinatorics :as combs]
             [clojure.string :as string]
-            [poker.util :refer [highest compare-desc]]))
+            [poker.logic.util :refer [highest compare-desc]]))
 
 (defn- occurrence-fn
   "Returns a function that takes a hand of cards and evaluates the rank-based occurrence requirement.

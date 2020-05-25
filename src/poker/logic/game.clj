@@ -1,8 +1,8 @@
-(ns poker.game
+(ns poker.logic.game
   "The poker.game namespace contains functions to create, restart and advance poker games."
   (:require [clojure.set :as sets]
-            [poker.state :as state]
-            [poker.util :refer [highest-bet compare-desc]]))
+            [poker.logic.state :as state]
+            [poker.logic.util :refer [highest-bet compare-desc]]))
 
 (defn required-bet
   "Calculates the minimum bet the current player needs to make in their turn.

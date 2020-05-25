@@ -1,4 +1,4 @@
-(ns poker.core
+(ns poker.logic.core
   "The poker.core namespace contains definitions for
   the basic building blocks of a poker game: the cards."
   (:require [clojure.string :as string]))

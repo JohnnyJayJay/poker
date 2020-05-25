@@ -3,8 +3,8 @@
 A Clojure implementation of a poker game ([Texas Hold 'em](https://en.wikipedia.org/wiki/Texas_hold_%27em))
 
 ```clojure
-(require '[poker.game :as poker]
-         '[poker.core :as cards])
+(require '[poker.logic.game :as poker]
+         '[poker.logic.core :as cards])
 
 (def player-budgets {"Alice" 100 "Bob" 85})
 (def game (poker/start-game 10 (keys player-budgets) (shuffle cards/deck) player-budgets))
