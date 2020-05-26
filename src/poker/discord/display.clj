@@ -42,14 +42,14 @@
          (with-suit black-ranks :spades)
          (with-suit red-ranks :hearts)
          (with-suit red-ranks :diamonds)
-         {[nil nil] 714561543173570661}))
+         {[nil nil] 714565166070759454}))
 
 (def lower-halves
   {:clubs    623564441224740866
    :spades   623564441094586378
    :hearts   623564441065226267
    :diamonds 623564440926683148
-   nil       714561447602028624})
+   nil       714565093798576455})
 
 (defn- emote-mention [id]
   (str "<:_:" id ">"))
