@@ -57,18 +57,22 @@
 
 (defn- evaluate-winners
   "Associates the given pot with its winners according to the given hands."
-  [{:keys [participants] :as pot} hands]
-  (assoc pot :winners (->> hands
-                           (filter (comp participants first))
-                           (highest (comp hands/hand-value second))
-                           (mapv first))))
+  [{:keys [participants money] :as pot} hands]
+  (as-> pot pot
+        (assoc pot
+          :winners
+          (->> hands
+               (filter (comp participants first))
+               (highest (comp hands/hand-value second))
+               (mapv first)))
+        (assoc pot :prize (quot money (count (:winners pot))))))
+
 
 (defn- award-prizes
   "Adds the individual prizes to the winners' budgets."
   [{:keys [pots] :as game}]
-  (reduce (fn [game {:keys [money winners]}]
-            (let [prize (quot money (count winners))]
-              (update game :budgets (merge-with + % (zipmap winners (repeat prize))))))
+  (reduce (fn [game {:keys [prize winners]}]
+            (update game :budgets (merge-with + % (zipmap winners (repeat prize)))))
           game
           pots))
 

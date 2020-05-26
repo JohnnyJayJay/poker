@@ -3,6 +3,7 @@
   The emotes used for the cards come from the Playing Card Emojis Discord server:
   https://top.gg/servers/623564336052568065"
   (:require [poker.logic.pots :as pots]
+            [poker.logic.game :as poker]
             [clojure.string :as strings]
             [clojure.set :as sets]))
 
@@ -81,12 +82,12 @@
 (defn user-mention [id]
   (str "<@" id ">"))
 
-(defn pots->str [[{:keys [money]} & side-pots]]
-  (str
-    "**Main pot:** `" money "` chips\n"
-    (if side-pots
-      (strings/join "\n" (map-indexed #(str "**Side pot " (inc %1) ":** `" (:money %2) "` chips") side-pots))
-      "")))
+(defn pots->str [pots]
+  (strings/join
+    "\n"
+    (map (fn [{:keys [name money]}]
+           (str "**" name ":** `" money "` chips"))
+         pots)))
 
 (def action->emoji
   {:fold   "\uD83C\uDDEB"
@@ -101,26 +102,58 @@
 (defn- move->str [{:keys [action cost]}]
   (str (action->emoji action) " " (strings/capitalize (name action)) " - `" cost "` chips"))
 
-(defn moves->str [moves]
-  (strings/join "\n" (map move->str moves)))
-
 (defn turn->str
-  [{[player-id] :cycle :keys [community-cards budgets] :as game}]
+  [{[player-id] :cycle :keys [budgets] :as game}]
+  (str
+    "It's your turn, " (user-mention player-id) "!
+    What would you like to do? You still have `" (budgets player-id) "` chips.\n"
+    (strings/join "\n" (map move->str (poker/possible-moves game)))))
+
+(defn instant-win->str
+  [{[{[winner] :winners :keys [money]}] :pots}]
+  (str
+    "Everybody except " (user-mention winner) " has folded!
+    They win the main pot of `" money "` chips."))
+
+(defn- hands->str [hands]
+  (strings/join
+    "\n"
+    (map (fn [[player-id {:keys [name cards]}]]
+           (str (user-mention player-id) " - " name "\n" (cards->str cards)))
+         hands)))
+
+(defn- pot-win->str
+  [{[winner & more :as winners] :winners :keys [prize name]}]
+  (if more
+    (str (strings/join ", " (map user-mention winners)) " split the " name " for `" prize "` chips each!")
+    (str (user-mention winner) " wins the " name " and gets `" prize "` chips!")))
+
+(defn- wins->str [pots]
+  (strings/join "\n" (map pot-win->str pots)))
+
+(defn showdown->str
+  [{:keys [hands pots]}]
+  (str
+    "**Showdown!** Let's have a look at the hands...\n\n"
+    (hands->str hands)
+    "\n\nThis means that:\n"
+    (wins->str pots)))
+
+(defn game->str
+  [{:keys [community-cards] :as game}]
   (str
     "**Community Cards:**\n"
     (cards->str community-cards 5) "\n"
-    (pots->str (:pots (pots/flush-bets game))) "\n\n"
-    "It's your turn, " (user-mention player-id) "!\n"
-    "What would you like to do? You still have `" (budgets player-id) "` chips.\n"))
+    (pots->str (:pots (pots/flush-bets game)))))
 
 (defn player-notification
-  [{:keys [players player-cards budgets]} player-id]
+  [{:keys [order player-cards budgets]} player-id]
   (str
     "Hi " (user-mention player-id) ", here are your cards for this game:\n"
     (cards->str (player-cards player-id)) "\n"
-    "You have a budget of `" (budgets player-id) "` chips.\n"
-    "We're playing No-Limit Hold'em. You can read up on the rules here:
+    "You have a budget of `" (budgets player-id) "` chips.
+    We're playing no-limit Texas hold'em. You can read up on the rules here:
     <https://en.wikipedia.org/wiki/Texas_hold_%27em>
 
-    Your opponents are: " (strings/join ", " (map user-mention (disj players player-id))) ".\n"
-    "**Have fun!**"))
+    Those are the participants, in order: " (strings/join ", " (map user-mention order)) "\n"
+    "**Have fun!** :black_joker:"))

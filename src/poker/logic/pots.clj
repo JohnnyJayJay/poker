@@ -27,8 +27,10 @@
 
 (defn- open-side-pot
   "Opens a new pot with 0 money in it and the players in the round bets."
-  [{:keys [round-bets] :as game}]
-  (update game :pots #(conj % {:money 0 :participants (set (keys round-bets))})))
+  [{:keys [round-bets pots] :as game}]
+  (update game :pots #(conj % {:money        0
+                               :participants (set (keys round-bets))
+                               :name         (str (count pots) ". Side pot")})))
 
 (defn flush-bets
   "Flushes all round bets by distributing among old and new pots as required by the poker rules.
