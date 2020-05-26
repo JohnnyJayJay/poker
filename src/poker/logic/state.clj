@@ -55,8 +55,22 @@
 
 (defmethod transition :river [game] (transition (assoc game :state :showdown)))
 
-(defn- assoc-winners [{:keys [participants] :as pot} hands]
-  (assoc pot :winners (mapv first (highest (comp hands/hand-value second) (filter (comp participants first) hands)))))
+(defn- evaluate-winners
+  "Associates the given pot with its winners according to the given hands."
+  [{:keys [participants] :as pot} hands]
+  (assoc pot :winners (->> hands
+                           (filter (comp participants first))
+                           (highest (comp hands/hand-value second))
+                           (mapv first))))
+
+(defn- award-prizes
+  "Adds the individual prizes to the winners' budgets."
+  [{:keys [pots] :as game}]
+  (reduce (fn [game {:keys [money winners]}]
+            (let [prize (quot money (count winners))]
+              (update game :budgets (merge-with + % (zipmap winners (repeat prize))))))
+          game
+          pots))
 
 (defmethod transition :showdown
   [{:keys [community-cards player-cards] :as game}]
@@ -67,12 +81,13 @@
                    (zipmap (keys player-cards)))]
     (-> game
         (assoc :hands hands)
-        (update :pots (partial mapv #(assoc-winners % hands))))))
+        (update :pots (partial mapv #(evaluate-winners % hands)))
+        award-prizes)))
 
 (defmethod transition :instant-win
   [{:keys [budgets] [{:keys [money]}] :pots :as game}]
   (let [[winner-id] (first budgets)]
     (-> game
         (next-round 0 :instant-win)
-        (assoc :winner winner-id)
-        (assoc :prize money))))
+        (update-in [:pots 0] #(assoc % :winners [winner-id]))
+        (update-in [:budgets winner-id] #(+ % money)))))

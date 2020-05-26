@@ -1,6 +1,10 @@
 (ns poker.discord.display
+  "The display namespace contains functions to create chat messages for poker games in Discord.
+  The emotes used for the cards come from the Playing Card Emojis Discord server:
+  https://top.gg/servers/623564336052568065"
   (:require [poker.logic.pots :as pots]
-            [clojure.string :as strings]))
+            [clojure.string :as strings]
+            [clojure.set :as sets]))
 
 (def ^:private black-ranks
   {:ace   623575870375985162
@@ -92,7 +96,7 @@
    :raise  "\uD83C\uDDF7"})
 
 (def emoji->action
-  (zipmap (vals action->emoji) (keys action->emoji)))
+  (sets/map-invert action->emoji))
 
 (defn- move->str [{:keys [action cost]}]
   (str (action->emoji action) " " (strings/capitalize (name action)) " - `" cost "` chips"))
