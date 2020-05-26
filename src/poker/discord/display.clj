@@ -41,37 +41,34 @@
   (merge (with-suit black-ranks :clubs)
          (with-suit black-ranks :spades)
          (with-suit red-ranks :hearts)
-         (with-suit red-ranks :diamonds)))
+         (with-suit red-ranks :diamonds)
+         {[nil nil] 714561543173570661}))
 
 (def lower-halves
   {:clubs    623564441224740866
    :spades   623564441094586378
    :hearts   623564441065226267
-   :diamonds 623564440926683148})
-
-(def lower-back 714561447602028624)
-
-(def upper-back 714561543173570661)
+   :diamonds 623564440926683148
+   nil       714561447602028624})
 
 (defn- emote-mention [id]
   (str "<:_:" id ">"))
 
-(defn- halves-str [cards upper fill-to]
+(defn- halves-str [cards upper]
   (let [keyfn (if upper (juxt :suit :rank) :suit)
-        halves-map (if upper upper-halves lower-halves)
-        back (if upper upper-back lower-back)]
+        halves-map (if upper upper-halves lower-halves)]
     (strings/join
       " "
-      (as-> cards cards
-            (map keyfn cards)
-            (map halves-map cards)
-            (concat cards (repeat (- fill-to (count cards)) back))
-            (map emote-mention cards)))))
+      (->> cards
+            (map keyfn)
+            (map halves-map)
+            (map emote-mention)))))
 
 (defn cards->str
   ([cards fill-to]
-   (str
-     (halves-str cards true fill-to)
-     \n
-     (halves-str cards false fill-to)))
+   (let [cards (concat cards (repeat (- fill-to (count cards)) nil))]
+     (str
+       (halves-str cards true)
+       \n
+       (halves-str cards false))))
   ([cards] (cards->str cards 0)))
