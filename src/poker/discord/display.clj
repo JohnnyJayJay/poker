@@ -1,5 +1,6 @@
 (ns poker.discord.display
-  (:require [clojure.string :as strings]))
+  (:require [poker.logic.pots :as pots]
+            [clojure.string :as strings]))
 
 (def ^:private black-ranks
   {:ace   623575870375985162
@@ -60,15 +61,62 @@
     (strings/join
       " "
       (->> cards
-            (map keyfn)
-            (map halves-map)
-            (map emote-mention)))))
+           (map keyfn)
+           (map halves-map)
+           (map emote-mention)))))
 
 (defn cards->str
   ([cards fill-to]
    (let [cards (concat cards (repeat (- fill-to (count cards)) nil))]
      (str
        (halves-str cards true)
-       \n
+       "\n"
        (halves-str cards false))))
   ([cards] (cards->str cards 0)))
+
+(defn user-mention [id]
+  (str "<@" id ">"))
+
+(defn pots->str [[{:keys [money]} & side-pots]]
+  (str
+    "**Main pot:** `" money "` chips\n"
+    (if side-pots
+      (strings/join "\n" (map-indexed #(str "**Side pot " (inc %1) ":** `" (:money %2) "` chips") side-pots))
+      "")))
+
+(def action->emoji
+  {:fold   "\uD83C\uDDEB"
+   :all-in "\uD83C\uDDE6"
+   :check  "\uD83C\uDDE8"
+   :call   "\uD83C\uDDE8"
+   :raise  "\uD83C\uDDF7"})
+
+(def emoji->action
+  (zipmap (vals action->emoji) (keys action->emoji)))
+
+(defn- move->str [{:keys [action cost]}]
+  (str (action->emoji action) " " (strings/capitalize (name action)) " - `" cost "` chips"))
+
+(defn moves->str [moves]
+  (strings/join "\n" (map move->str moves)))
+
+(defn turn->str
+  [{[player-id] :cycle :keys [community-cards budgets] :as game}]
+  (str
+    "**Community Cards:**\n"
+    (cards->str community-cards 5) "\n"
+    (pots->str (:pots (pots/flush-bets game))) "\n\n"
+    "It's your turn, " (user-mention player-id) "!\n"
+    "What would you like to do? You still have `" (budgets player-id) "` chips.\n"))
+
+(defn player-notification
+  [{:keys [players player-cards budgets]} player-id]
+  (str
+    "Hi " (user-mention player-id) ", here are your cards for this game:\n"
+    (cards->str (player-cards player-id)) "\n"
+    "You have a budget of `" (budgets player-id) "` chips.\n"
+    "We're playing No-Limit Hold'em. You can read up on the rules here:
+    <https://en.wikipedia.org/wiki/Texas_hold_%27em>
+
+    Your opponents are: " (strings/join ", " (map user-mention (disj players player-id))) ".\n"
+    "**Have fun!**"))

@@ -100,15 +100,15 @@
       state/transition))
 
 (defn possible-moves
-  "Returns a map of the possible moves the current player can make associated with their corresponding (minimum) cost.
+  "Returns a vector of the possible moves the current player can make, consisting of a keyword and the associated cost.
   fold and all-in are always possible."
   [game]
   (let [maximum (possible-bet game)
         minimum (required-bet game)]
-    (cond-> {:fold 0 :all-in maximum}
-            (zero? minimum) (assoc :check 0)
-            (and (pos? minimum) (> maximum minimum)) (assoc :call minimum)
-            (> maximum minimum) (assoc :raise (minimum-raise game)))))
+    (cond-> [{:action :fold :cost 0} {:action :all-in :cost maximum}]
+            (zero? minimum) (conj {:action :check :cost 0})
+            (and (pos? minimum) (> maximum minimum)) (conj {:action :call :cost minimum})
+            (> maximum minimum) (conj {:action :raise :cost (minimum-raise game)}))))
 
 (defn- new-order
   "Calculates the order of the next game (with possibly new players joining).
@@ -124,13 +124,12 @@
             (filter new-players players))))
 
 
-(defn start-game
-  "Starts a new game or restarts an existing game (preserving previous order and budgets) if one is given.
+(defn restart-game
+  "Restarts an existing game, preserving previous order and budgets.
   The budgets are a map of player id -> number, where the number indicates the
   budget they start with or add to their current budget.
-  The big-blind-value is an integer denoting the big blind bet amount. The small blind will be half of that.
-  The function will calculate the correct order of players using previous order if applicable and the order of player-ids.
-  The given cards will be used in their given order.
+  The function will calculate the correct order of players using previous order and the order of given player-ids.
+  The given cards will be used in their current order.
 
   A game is a map with the following associations:
   - :order a sequence of the players that participated at the start of the game in the correct order
@@ -148,35 +147,40 @@
   - :budgets a map of player id -> budget (number)
   - :turns a counter to keep track of the amount of turns made in a betting round. It is reset when someone raises
   - :state the current state of the game. Possible states: :pre-flop, :flop, :turn, :river, :instant-win, :showdown"
-  ([{:keys [order big-blind-value] :as game} player-ids cards new-budgets]
-   (let [players (set player-ids)
-         [small-blind big-blind :as new-order] (new-order players order)
-         [player-cards remaining-cards] (split-at (* 2 (count players)) cards)]
-     (-> game
-         (merge {:order           new-order
-                 :big-blind-value big-blind-value
-                 :small-blind     small-blind
-                 :big-blind       big-blind
-                 :live-order      new-order
-                 :cycle           (cycle new-order)
-                 :remaining-cards remaining-cards
-                 :community-cards []
-                 :pots            [{:participants players
-                                    :money        0}]
-                 :players         players
-                 :player-cards    (zipmap players (partition 2 player-cards))
-                 :round-bets      (zipmap players (repeat 0))
-                 :turns           0
-                 :state           :pre-flop})
-         (update :budgets #(merge-with + % new-budgets))
-         (dissoc :winner :prize :hands)
-         (bet (quot big-blind-value 2))
-         (bet big-blind-value)
-         (update :turns dec))))
-  ([big-blind-value player-ids cards initial-budgets]
-   (start-game {:big-blind-value big-blind-value
-                :order ()
-                :budgets {}}
-               player-ids
-               cards
-               initial-budgets)))
+  [{:keys [order big-blind-value] :as game} player-ids cards new-budgets]
+  (let [players (set player-ids)
+        [small-blind big-blind :as new-order] (new-order players order)
+        [player-cards remaining-cards] (split-at (* 2 (count players)) cards)]
+    (-> game
+        (merge {:order           new-order
+                :big-blind-value big-blind-value
+                :small-blind     small-blind
+                :big-blind       big-blind
+                :live-order      new-order
+                :cycle           (cycle new-order)
+                :remaining-cards remaining-cards
+                :community-cards []
+                :pots            [{:participants players
+                                   :money        0}]
+                :players         players
+                :player-cards    (zipmap players (partition 2 player-cards))
+                :round-bets      (zipmap players (repeat 0))
+                :turns           0
+                :state           :pre-flop})
+        (update :budgets #(merge-with + % new-budgets))
+        (dissoc :winner :prize :hands)
+        (bet (quot big-blind-value 2))
+        (bet big-blind-value)
+        (update :turns dec))))
+
+(defn start-new-game
+  "Starts a new game with the given players, cards, initial budgets and the big blind value.
+  The big-blind-value is an integer denoting the big blind bet amount. The small blind will be half of that.
+  The other parameters are the same as in restart-game."
+  [big-blind-value player-ids cards initial-budgets]
+  (restart-game {:big-blind-value big-blind-value
+                 :order           ()
+                 :budgets         {}}
+                player-ids
+                cards
+                initial-budgets))
