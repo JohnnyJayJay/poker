@@ -72,7 +72,7 @@
   "Adds the individual prizes to the winners' budgets."
   [{:keys [pots] :as game}]
   (reduce (fn [game {:keys [prize winners]}]
-            (update game :budgets (merge-with + % (zipmap winners (repeat prize)))))
+            (update game :budgets #(merge-with + % (zipmap winners (repeat prize)))))
           game
           pots))
 

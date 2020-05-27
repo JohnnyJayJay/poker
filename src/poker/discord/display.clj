@@ -89,6 +89,13 @@
            (str "**" name ":** `" money "` chips"))
          pots)))
 
+(defn game->str
+  [{:keys [community-cards] :as game}]
+  (str
+    "**Community Cards:**\n"
+    (cards->str community-cards 5) "\n"
+    (pots->str (:pots (pots/flush-bets game)))))
+
 (def action->emoji
   {:fold   "\uD83C\uDDEB"
    :all-in "\uD83C\uDDE6"
@@ -138,13 +145,6 @@
     (hands->str hands)
     "\n\nThis means that:\n"
     (wins->str pots)))
-
-(defn game->str
-  [{:keys [community-cards] :as game}]
-  (str
-    "**Community Cards:**\n"
-    (cards->str community-cards 5) "\n"
-    (pots->str (:pots (pots/flush-bets game)))))
 
 (defn player-notification
   [{:keys [order player-cards budgets]} player-id]
