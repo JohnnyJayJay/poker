@@ -157,3 +157,25 @@
 
     Those are the participants, in order: " (strings/join ", " (map user-mention order)) "\n"
     "**Have fun!** :black_joker:"))
+
+(defn new-game-message [player-id timeout buy-in]
+  (str
+    (user-mention player-id) " wants to play Poker!
+    You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!
+    Everybody will start with `" buy-in "` chips."))
+
+(defn- budgets->str [budgets]
+  (strings/join
+    "\n"
+    (map (fn [[player-id budget]]
+           (str (user-mention player-id) " - `" budget "` chips"))
+         budgets)))
+
+(defn restart-game-message [{:keys [budgets]} timeout buy-in]
+  (str
+    "This round of the game is over, but you can keep playing!
+    Players of the last round, you now have:\n"
+    (budgets->str budgets) "\n\n"
+    "You will enter the next round with this if you continue playing.
+    New players can also join! They will start with `" buy-in "` chips.
+    If you want to play, react with :handshake: within the next " (quot timeout 1000) " seconds."))
