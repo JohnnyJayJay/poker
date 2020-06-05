@@ -22,7 +22,7 @@
   (merge (zipmap players (repeat buy-in)) previous-budgets))
 
 (defn shuffled-deck []
-  (shuffle (cards/deck)))
+  (shuffle cards/deck))
 
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
@@ -107,7 +107,7 @@
 (defmethod handle-command "raise" [_ args user-id channel-id]
   (let [{:keys [move-channel] :as game} (get @active-games channel-id)]
     (when-let [move (valid-move game user-id "raise")]
-      (if-let [amount (try-parse-int (args 0))]
+      (if-let [amount (try-parse-int (get args 0))]
         (if (<= (poker/minimum-raise game) amount (poker/possible-bet game))
           (async/>!! move-channel (assoc move :amount amount))
           (send-message! channel-id (disp/invalid-raise-message game)))

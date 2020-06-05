@@ -67,7 +67,7 @@
                (mapv first)))
         (assoc pot :prize (quot money (count (:winners pot))))))
 
-
+; FIXME winner does not end up with higher
 (defn- award-prizes
   "Adds the individual prizes to the winners' budgets."
   [{:keys [pots] :as game}]
