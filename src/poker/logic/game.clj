@@ -32,12 +32,13 @@
 (defn- remove-participant
   "Removes the current player from the active participants, i.e.
   they will not be able to make a turn again in this game.
-  This is used for both players who go all in and players who fold."
-  [{[player-id] :cycle :as game}]
+  This is used for both players who go all in and players who fold.
+  The cycle will be set to nil if this was the last player remaining."
+  [{[player-id] :cycle :keys [live-order] :as game}]
   (letfn [(remove-id [coll]
             (remove #{player-id} coll))]
     (-> game
-        (update :cycle #(cons player-id (remove-id %)))
+        (update :cycle #(when (> (count live-order) 1) (cons player-id (remove-id %))))
         (update :live-order remove-id)
         (update :turns dec))))
 
