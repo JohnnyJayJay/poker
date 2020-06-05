@@ -9,7 +9,6 @@
             [clojure.string :as strings]
             [clojure.edn :as edn]))
 
-
 (defonce message-ch (atom nil))
 (defonce wait-time (atom nil))
 (defonce timeout (atom nil))
@@ -64,6 +63,7 @@
           :let [{dm-id :id} @(msgs/create-dm! @message-ch player)]]
     (send-message! dm-id (disp/player-notification-message game player))))
 
+(with-open [()])
 (defn in-game? [user-id]
   (some #(contains? % user-id) (map :players (vals @active-games))))
 
