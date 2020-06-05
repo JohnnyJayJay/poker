@@ -21,9 +21,6 @@
 (defn calculate-budgets [players buy-in previous-budgets]
   (merge (zipmap players (repeat buy-in)) previous-budgets))
 
-(defn shuffled-deck []
-  (shuffle cards/deck))
-
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
 
@@ -66,6 +63,9 @@
 (defn in-game? [user-id]
   (some #(contains? % user-id) (map :players (vals @active-games))))
 
+(defn remove-bust-outs [game]
+  (update game :budgets #(into {} (filter (comp pos? second) %))))
+
 (defn start-game! [channel-id buy-in start-message start-fn]
   (let [{join-message-id :id} @(send-message! channel-id start-message)]
     (swap! waiting-channels conj channel-id)
@@ -76,11 +76,11 @@
           (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
             (notify-players! game)
             (send-message! channel-id (disp/blinds-message game))
-            (let [{:keys [budgets] :as result} (async/<! (game-loop! game))]
+            (let [{:keys [budgets] :as result} (-> game game-loop! async/<! remove-bust-outs)]
               (start-game!
                 channel-id buy-in
                 (disp/restart-game-message result @wait-time buy-in)
-                #(poker/restart-game result % (shuffled-deck) (calculate-budgets % buy-in budgets)))))
+                #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
           (msgs/edit-message! @message-ch channel-id join-message-id :content "Not enough players."))))))
 
 (defmulti handle-event (fn [type _] type))
@@ -123,7 +123,7 @@
             (start-game!
               channel-id buy-in
               (disp/new-game-message user-id @wait-time buy-in)
-              #(poker/start-new-game big-blind % (shuffled-deck) (calculate-budgets % buy-in {}))))))
+              #(poker/start-new-game big-blind % (shuffle cards/deck) (calculate-budgets % buy-in {}))))))
 
 (defmethod handle-event :default [_ _])
 
