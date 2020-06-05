@@ -89,8 +89,8 @@
         award-prizes)))
 
 (defmethod transition :instant-win
-  [{:keys [budgets] [{:keys [money]}] :pots :as game}]
-  (let [[winner-id] (first budgets)]
+  [{:keys [players] [{:keys [money]}] :pots :as game}]
+  (let [[winner-id] (first players)]
     (-> game
         (next-round 0 :instant-win)
         (update-in [:pots 0] assoc :winners [winner-id])

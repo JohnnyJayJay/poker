@@ -82,7 +82,7 @@
                 channel-id buy-in
                 (disp/restart-game-message result @wait-time buy-in)
                 #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-          (msgs/edit-message! @message-ch channel-id join-message-id :content "Not enough players."))))))
+          (msgs/delete-message! @message-ch channel-id join-message-id))))))
 
 (defmulti handle-event (fn [type _] type))
 
