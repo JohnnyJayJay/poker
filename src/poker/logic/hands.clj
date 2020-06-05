@@ -6,6 +6,7 @@
             [clojure.string :as string]
             [poker.logic.util :refer [highest compare-desc]]))
 
+; FIXME higher pairs don't always come before lower pairs
 (defn- occurrence-fn
   "Returns a function that takes a hand of cards and evaluates the rank-based occurrence requirement.
   n is the number of times a rank must occur in the hand, amount is the number of matching n-groups

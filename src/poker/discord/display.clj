@@ -4,8 +4,7 @@
   https://top.gg/servers/623564336052568065"
   (:require [poker.logic.pots :as pots]
             [poker.logic.game :as poker]
-            [clojure.string :as strings]
-            [clojure.set :as sets]))
+            [clojure.string :as strings]))
 
 (def ^:private black-ranks
   {:ace   623575870375985162
@@ -82,45 +81,35 @@
 (defn user-mention [id]
   (str "<@" id ">"))
 
-(defn pots->str [pots]
+(defn- pots->str [pots]
   (strings/join
     "\n"
     (map (fn [{:keys [name money]}]
            (str "**" name ":** `" money "` chips"))
          pots)))
 
-(defn game->str
+(defn game-state-message
   [{:keys [community-cards] :as game}]
   (str
     "**Community Cards:**\n"
     (cards->str community-cards 5) "\n"
     (pots->str (:pots (pots/flush-bets game)))))
 
-(def action->emoji
-  {:fold   "\uD83C\uDDEB"
-   :all-in "\uD83C\uDDE6"
-   :check  "\uD83C\uDDE8"
-   :call   "\uD83C\uDDE8"
-   :raise  "\uD83C\uDDF7"})
-
-(def emoji->action
-  (sets/map-invert action->emoji))
-
 (defn- move->str [{:keys [action cost]}]
-  (str (action->emoji action) " " (strings/capitalize (name action)) " - `" cost "` chips"))
+  (str (strings/capitalize (name action)) " - `" cost "` chips"))
 
-(defn turn->str
+(defn turn-message
   [{[player-id] :cycle :keys [budgets] :as game}]
   (str
-    "It's your turn, " (user-mention player-id) "!
-    What would you like to do? You still have `" (budgets player-id) "` chips.\n"
+    "It's your turn, " (user-mention player-id) "!\n"
+    "What would you like to do? You still have `" (budgets player-id) "` chips.\n"
     (strings/join "\n" (map move->str (poker/possible-moves game)))))
 
-(defn instant-win->str
+(defn instant-win-message
   [{[{[winner] :winners :keys [money]}] :pots}]
   (str
-    "Everybody except " (user-mention winner) " has folded!
-    They win the main pot of `" money "` chips."))
+    "Everybody except " (user-mention winner) " has folded!\n"
+    "They win the main pot of `" money "` chips."))
 
 (defn- hands->str [hands]
   (strings/join
@@ -138,7 +127,7 @@
 (defn- wins->str [pots]
   (strings/join "\n" (map pot-win->str pots)))
 
-(defn showdown->str
+(defn showdown-message
   [{:keys [hands pots]}]
   (str
     "**Showdown!** Let's have a look at the hands...\n\n"
@@ -146,23 +135,24 @@
     "\n\nThis means that:\n"
     (wins->str pots)))
 
-(defn player-notification
+(defn player-notification-message
   [{:keys [order player-cards budgets]} player-id]
   (str
     "Hi " (user-mention player-id) ", here are your cards for this game:\n"
     (cards->str (player-cards player-id)) "\n"
-    "You have a budget of `" (budgets player-id) "` chips.
-    We're playing no-limit Texas hold'em. You can read up on the rules here:
-    <https://en.wikipedia.org/wiki/Texas_hold_%27em>
-
-    Those are the participants, in order: " (strings/join ", " (map user-mention order)) "\n"
+    "You have a budget of `" (budgets player-id) "` chips.\n"
+    "We're playing no-limit Texas hold'em. You can read up on the rules here:\n"
+    "<https://en.wikipedia.org/wiki/Texas_hold_%27em>\n\n"
+    "Those are the participants, in order: " (strings/join ", " (map user-mention order)) "\n"
     "**Have fun!** :black_joker:"))
+
+(def handshake-emoji "\uD83E\uDD1D")
 
 (defn new-game-message [player-id timeout buy-in]
   (str
-    (user-mention player-id) " wants to play Poker!
-    You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!
-    Everybody will start with `" buy-in "` chips."))
+    (user-mention player-id) " wants to play Poker!\n"
+    "You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!\n"
+    "Everybody will start with `" buy-in "` chips."))
 
 (defn- budgets->str [budgets]
   (strings/join
@@ -173,9 +163,37 @@
 
 (defn restart-game-message [{:keys [budgets]} timeout buy-in]
   (str
-    "This round of the game is over, but you can keep playing!
-    Players of the last round, you now have:\n"
+    "This round of the game is over, but you can keep playing!\n"
+    "Players of the last round, you now have:\n"
     (budgets->str budgets) "\n\n"
-    "You will enter the next round with this if you continue playing.
-    New players can also join! They will start with `" buy-in "` chips.
-    If you want to play, react with :handshake: within the next " (quot timeout 1000) " seconds."))
+    "You will enter the next round with this if you continue playing.\n"
+    "New players can also join! They will start with `" buy-in "` chips.\n"
+    "If you want to play, react with :handshake: within the next " (quot timeout 1000) " seconds."))
+
+(defn already-ingame-message [user-id]
+  (str "You are already in a game, " (user-mention user-id) "!"))
+
+(defn channel-mention [id]
+  (str "<#" id ">"))
+
+(defn channel-occupied-message [channel-id user-id]
+  (str "There already is an active poker session in " (channel-mention channel-id) ", " (user-mention user-id)))
+
+(defn channel-waiting-message [channel-id user-id]
+  (str "There already is a game waiting for players to join in " (channel-mention channel-id)
+       ". Maybe you want to join there, " (user-mention user-id) "?"))
+
+(defn invalid-raise-message [game]
+  (let [minimum (poker/minimum-raise game)]
+    (str "You must raise to an amount between `" minimum "` and `"
+         (poker/possible-bet game) "` chips. E.g.: `raise " minimum "`")))
+
+(defn info-message [user-id]
+  (str
+    "Hi, " (user-mention user-id) "!\n"
+    "I am a Discord bot that allows you to play Poker (No limit Texas hold' em) against up to 19 other people in chat. "
+    "To start a new game, simply type `holdem! <buy-in amount>`. The (optional) buy-in is the amount of chips everyone will start with.\n"
+    "Grab a bunch of friends and try it out!\n\n"
+    "I am open source and written in the Clojure programming language. "
+    "You can find my code here: https://github.com/JohnnyJayJay/poker/"))
+

@@ -16,14 +16,12 @@
 
 (defn possible-bet
   "Calculates the maximum bet the current player can possibly make in their turn.
-  This considers budgets of other players as well as the highest bet in the current
-  betting round, meaning that this will never be higher than the highest other player
-  budget or the highest bet this round."
-  [{:keys [budgets live-order round-bets] [player-id] :cycle}]
-  (let [own-budget (budgets player-id)
-        highest-bet (reduce max (vals round-bets))
-        highest-other-budget (reduce max highest-bet (map budgets (remove #{player-id} live-order)))]
-    (min own-budget highest-other-budget)))
+  This considers budgets of other players, so this will never return a value that no one else can match."
+  [{:keys [budgets live-order] [player-id] :cycle :as game}]
+  (let [required (required-bet game)
+        own-budget (budgets player-id)
+        highest-other-budget (reduce max 0 (map budgets (remove #{player-id} live-order)))]
+    (+ required (min (- own-budget required) highest-other-budget))))
 
 (defn minimum-raise
   "Returns the minimum bet required to raise.
@@ -108,7 +106,7 @@
     (cond-> [{:action :fold :cost 0} {:action :all-in :cost maximum}]
             (zero? minimum) (conj {:action :check :cost 0})
             (and (pos? minimum) (> maximum minimum)) (conj {:action :call :cost minimum})
-            (> maximum minimum) (conj {:action :raise :cost (minimum-raise game)}))))
+            (and (< (minimum-raise game) maximum) (> maximum minimum)) (conj {:action :raise :cost (minimum-raise game)}))))
 
 (defn- new-order
   "Calculates the order of the next game (with possibly new players joining).
@@ -185,3 +183,6 @@
                 player-ids
                 cards
                 initial-budgets))
+
+(defn end? [{:keys [state]}]
+  (or (= state :showdown) (= state :instant-win)))

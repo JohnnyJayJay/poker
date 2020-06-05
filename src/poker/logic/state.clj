@@ -27,6 +27,7 @@
       (update :remaining-cards #(drop cards-to-unveil %))
       (assoc :state next-state)))
 
+; FIXME doesn't end if all players go all in
 (defmulti
   transition
   "Multimethod to transition from one poker game state to another.
@@ -42,7 +43,7 @@
     (cond
       (= (count players) 1) :instant-win
       (not (round-end? game)) :default
-      (= (count live-order) 1) :showdown
+      (< (count live-order) 2) :showdown
       :else state)))
 
 (defmethod transition :default [game] game)

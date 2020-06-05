@@ -1,7 +1,8 @@
 (ns poker.logic.pots
   "The poker.pots namespace contains a function to calculate poker pots at the end of a round.
   The last pot is considered to be the current pot."
-  (:require [poker.logic.util :refer [all-in? highest-bet]]))
+  (:require [poker.logic.util :refer [all-in? highest-bet]]
+            [clojure.set :as sets]))
 
 (defn- update-bets
   "Updates all round bets in the game using the given function."
@@ -22,7 +23,7 @@
   "Updates all pots, removing all participants who are no longer part of the game."
   [{:keys [players] :as game}]
   (letfn [(remove-folds [pot]
-            (update pot :participants #(clojure.set/intersection players %)))]
+            (update pot :participants #(sets/intersection players %)))]
     (update game :pots #(mapv remove-folds %))))
 
 (defn- open-side-pot
