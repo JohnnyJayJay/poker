@@ -63,7 +63,6 @@
           :let [{dm-id :id} @(msgs/create-dm! @message-ch player)]]
     (send-message! dm-id (disp/player-notification-message game player))))
 
-(with-open [()])
 (defn in-game? [user-id]
   (some #(contains? % user-id) (map :players (vals @active-games))))
 
