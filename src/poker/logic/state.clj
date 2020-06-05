@@ -23,7 +23,7 @@
       (update :cycle #(drop-while (complement #{first}) %))
       (assoc :turns 0)
       (dissoc :last-raise)
-      (update :community-cards #(concat % (take cards-to-unveil remaining-cards)))
+      (update :community-cards concat (take cards-to-unveil remaining-cards))
       (update :remaining-cards #(drop cards-to-unveil %))
       (assoc :state next-state)))
 
@@ -93,5 +93,5 @@
   (let [[winner-id] (first budgets)]
     (-> game
         (next-round 0 :instant-win)
-        (update-in [:pots 0] #(assoc % :winners [winner-id]))
-        (update-in [:budgets winner-id] #(+ % money)))))
+        (update-in [:pots 0] assoc :winners [winner-id])
+        (update-in [:budgets winner-id] + money))))

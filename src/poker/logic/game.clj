@@ -59,8 +59,8 @@
     (-> (cond-> game
                 (> amount minimum) (assoc :turns 0)
                 (= amount budget) remove-participant)
-        (update-in [:budgets player-id] #(- % amount))
-        (update-in [:round-bets player-id] #(+ % amount))
+        (update-in [:budgets player-id] - amount)
+        (update-in [:round-bets player-id] + amount)
         (update :cycle rest)
         (update :turns inc)
         state/transition)))
@@ -92,8 +92,8 @@
   [{[player-id] :cycle :as game}]
   (-> game
       remove-participant
-      (update :players #(disj % player-id))
-      (update :player-cards #(dissoc % player-id))
+      (update :players disj player-id)
+      (update :player-cards dissoc player-id)
       (update :cycle rest)
       (update :turns inc)
       state/transition))
@@ -167,6 +167,7 @@
                 :round-bets      (zipmap players (repeat 0))
                 :turns           0
                 :state           :pre-flop})
+        (update :budgets select-keys players)
         (update :budgets #(merge-with + % new-budgets))
         (dissoc :winner :prize :hands)
         (bet (quot big-blind-value 2))

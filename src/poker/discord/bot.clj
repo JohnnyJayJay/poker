@@ -7,6 +7,7 @@
             [discljord.events :as events]
             [clojure.core.async :as async]
             [clojure.string :as strings]
+            [clojure.set :as sets]
             [clojure.edn :as edn]))
 
 (defonce message-ch (atom nil))
@@ -19,7 +20,7 @@
 (defonce users-in-game (atom #{}))
 
 (defn calculate-budgets [players buy-in previous-budgets]
-  (merge (zipmap players (repeat buy-in)) previous-budgets))
+  (zipmap (sets/difference (set players) (set (keys previous-budgets))) (repeat buy-in)))
 
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
