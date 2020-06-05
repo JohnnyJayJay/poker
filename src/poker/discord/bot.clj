@@ -118,7 +118,7 @@
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [buy-in (or (and (seq args) (try-parse-int (args 0))) @default-buy-in)
+    :else (let [buy-in (or (try-parse-int (get args 0)) @default-buy-in)
                 big-blind (quot buy-in 100)]
             (start-game!
               channel-id buy-in
