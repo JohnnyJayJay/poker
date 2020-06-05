@@ -154,6 +154,12 @@
     "You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!\n"
     "Everybody will start with `" buy-in "` chips."))
 
+(defn blinds-message [{:keys [big-blind small-blind big-blind-value]}]
+  (str
+    (user-mention small-blind) " places the small blind of `" (quot big-blind-value 2) "` chips.\n"
+    (user-mention big-blind) " places the big blind of `" big-blind-value "` chips."))
+
+
 (defn- budgets->str [budgets]
   (strings/join
     "\n"

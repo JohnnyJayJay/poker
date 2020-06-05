@@ -71,6 +71,7 @@
         (if (> (count players) 1)
           (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
             (notify-players! game)
+            (send-message! channel-id (disp/blinds-message game))
             (let [{:keys [budgets] :as result} (async/<! (game-loop game))]
               (start-game!
                 channel-id buy-in
