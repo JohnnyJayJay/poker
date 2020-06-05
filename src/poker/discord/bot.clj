@@ -28,7 +28,7 @@
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
 
-(defn game-loop [game]
+(defn game-loop! [game]
   (async/go-loop [{:keys [state channel-id move-channel] :as game} game]
     (swap! active-games assoc channel-id game)
     (send-message! channel-id (disp/game-state-message game))
@@ -77,7 +77,7 @@
           (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
             (notify-players! game)
             (send-message! channel-id (disp/blinds-message game))
-            (let [{:keys [budgets] :as result} (async/<! (game-loop game))]
+            (let [{:keys [budgets] :as result} (async/<! (game-loop! game))]
               (start-game!
                 channel-id buy-in
                 (disp/restart-game-message result @wait-time buy-in)
