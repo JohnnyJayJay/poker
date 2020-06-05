@@ -120,6 +120,8 @@
               (disp/new-game-message user-id @timeout buy-in)
               #(poker/start-new-game big-blind % (shuffled-deck) (calculate-budgets % buy-in {}))))))
 
+(defmethod handle-event :default [_ _])
+
 (defmethod handle-command :default [_ _ _ _])
 
 (defmethod handle-event :message-create

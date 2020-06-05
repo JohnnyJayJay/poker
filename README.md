@@ -17,7 +17,7 @@ A Clojure implementation of a poker game ([Texas Hold 'em](https://en.wikipedia.
 (poker/all-in game)
 ```
 
-An implementation of a Discord bot that allows you to play this in chat is planned/WIP and will be added to this repo.
+An implementation of a Discord bot that allows you to play this in chat is WIP and can be found in the poker.discord namespaces.
 
 ## License
 
