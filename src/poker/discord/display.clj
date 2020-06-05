@@ -203,3 +203,6 @@
     "I am open source and written in the Clojure programming language. "
     "You can find my code here: https://github.com/JohnnyJayJay/poker/"))
 
+(defn timed-out-message [{[current] :cycle}]
+  (str (user-mention current) " did not respond in time and therefore folds automatically."))
+

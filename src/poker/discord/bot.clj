@@ -11,6 +11,7 @@
 
 
 (defonce message-ch (atom nil))
+(defonce wait-time (atom nil))
 (defonce timeout (atom nil))
 (defonce default-buy-in (atom nil))
 
@@ -38,17 +39,21 @@
         game)
       (do
         (send-message! channel-id (disp/turn-message game))
-        (let [{:keys [action amount]} (async/<! move-channel)]
-          (recur (case action
-                   (:check :call) (poker/call game)
-                   :all-in (poker/all-in game)
-                   :fold (poker/fold game)
-                   :raise (poker/raise game amount))))))))
+        (async/alt!
+          (async/timeout @timeout) (do
+                                     (send-message! channel-id (disp/timed-out-message game))
+                                     (recur (poker/fold game)))
+          move-channel ([{:keys [action amount]}]
+                        (recur (case action
+                                 (:check :call) (poker/call game)
+                                 :all-in (poker/all-in game)
+                                 :fold (poker/fold game)
+                                 :raise (poker/raise game amount)))))))))
 
 (defn gather-players! [channel-id message-id]
   (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
   (async/go
-    (async/<! (async/timeout @timeout))
+    (async/<! (async/timeout @wait-time))
     (->> @(msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20)
          (remove :bot)
          (map :id)
@@ -75,7 +80,7 @@
             (let [{:keys [budgets] :as result} (async/<! (game-loop game))]
               (start-game!
                 channel-id buy-in
-                (disp/restart-game-message result @timeout buy-in)
+                (disp/restart-game-message result @wait-time buy-in)
                 #(poker/restart-game result % (shuffled-deck) (calculate-budgets % buy-in budgets)))))
           (msgs/edit-message! @message-ch channel-id join-message-id :content "Not enough players."))))))
 
@@ -118,7 +123,7 @@
                 big-blind (quot buy-in 100)]
             (start-game!
               channel-id buy-in
-              (disp/new-game-message user-id @timeout buy-in)
+              (disp/new-game-message user-id @wait-time buy-in)
               #(poker/start-new-game big-blind % (shuffled-deck) (calculate-budgets % buy-in {}))))))
 
 (defmethod handle-event :default [_ _])
@@ -136,11 +141,12 @@
       (defmethod handle-command command [_ _ user-id channel-id]
         (send-message! channel-id (disp/info-message user-id))))))
 
-(defn- start-bot! [{:keys [token timeout default-buy-in]}]
+(defn- start-bot! [{:keys [token wait-time timeout default-buy-in]}]
   (let [event-ch (async/chan 100)
         connection-ch (conns/connect-bot! token event-ch)
         message-ch (msgs/start-connection! token)]
     (reset! poker.discord.bot/message-ch message-ch)
+    (reset! poker.discord.bot/wait-time wait-time)
     (reset! poker.discord.bot/timeout timeout)
     (reset! poker.discord.bot/default-buy-in default-buy-in)
     (def-ping-commands (:id @(msgs/get-current-user! message-ch)))
