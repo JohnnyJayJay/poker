@@ -20,6 +20,12 @@ This is (roughly) how the logic part is used:
 
 ## Bot
 
+Here are a few impressions of what it looks like:
+
+![](https://i.imgur.com/zGCQoHN.png)
+![](https://i.imgur.com/FeJTYD5.png)
+![](https://i.imgur.com/yAWQtXn.png)
+
 The bot is public, you can invite it [here](https://discord.com/api/oauth2/authorize?client_id=461791942779338762&permissions=329792&scope=bot).
 
 I'm still looking for a way to host the bot long term, other than that, its functionality is near complete.
