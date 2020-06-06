@@ -136,7 +136,7 @@
   and a :cards key associated with the cards of the concrete hand."
   [cards]
   (let [card-combs (combs/combinations cards 5)]
-    (loop [[{match :match-fn :as hand} :as possible-hands] hands]
+    (loop [[{match :match-fn :as hand} & remaining-hands] hands]
       (if-let [matching-combs (seq (keep match card-combs))]
         (assoc hand :cards (first (highest cards-value (map vec matching-combs))))
-        (recur (rest possible-hands))))))
+        (recur remaining-hands)))))
