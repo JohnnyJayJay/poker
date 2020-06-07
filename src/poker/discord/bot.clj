@@ -113,13 +113,12 @@
           (send-message! channel-id (disp/invalid-raise-message game)))
         (send-message! channel-id (disp/invalid-raise-message game))))))
 
-; TODO 100 buy-in minimum
 (defmethod handle-command "holdem!" [_ args user-id channel-id]
   (cond
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [buy-in (or (try-parse-int (get args 0)) (:default-buy-in @config))
+    :else (let [buy-in (max 100 (or (try-parse-int (get args 0)) (:default-buy-in @config)))
                 big-blind (quot buy-in 100)]
             (start-game!
               channel-id buy-in
