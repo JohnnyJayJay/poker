@@ -10,10 +10,9 @@
             [clojure.set :as sets]
             [clojure.edn :as edn]))
 
+(defonce connection-ch (atom nil))
 (defonce message-ch (atom nil))
-(defonce wait-time (atom nil))
-(defonce timeout (atom nil))
-(defonce default-buy-in (atom nil))
+(defonce config (atom nil))
 
 (defonce active-games (atom {}))
 (defonce waiting-channels (atom #{}))
@@ -37,9 +36,9 @@
       (do
         (send-message! channel-id (disp/turn-message game))
         (async/alt!
-          (async/timeout @timeout) (do
-                                     (send-message! channel-id (disp/timed-out-message game))
-                                     (recur (poker/fold game)))
+          (async/timeout (:timeout @config)) (do
+                                               (send-message! channel-id (disp/timed-out-message game))
+                                               (recur (poker/fold game)))
           move-channel ([{:keys [action amount]}]
                         (recur (case action
                                  (:check :call) (poker/call game)
@@ -50,7 +49,7 @@
 (defn gather-players! [channel-id message-id]
   (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
   (async/go
-    (async/<! (async/timeout @wait-time))
+    (async/<! (async/timeout (:wait-time @config)))
     (->> @(msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20)
          (remove :bot)
          (map :id)
@@ -80,7 +79,7 @@
             (let [{:keys [budgets] :as result} (-> game game-loop! async/<! remove-bust-outs)]
               (start-game!
                 channel-id buy-in
-                (disp/restart-game-message result @wait-time buy-in)
+                (disp/restart-game-message result (:wait-time @config) buy-in)
                 #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
           (msgs/delete-message! @message-ch channel-id join-message-id))))))
 
@@ -114,16 +113,17 @@
           (send-message! channel-id (disp/invalid-raise-message game)))
         (send-message! channel-id (disp/invalid-raise-message game))))))
 
+; TODO 100 buy-in minimum
 (defmethod handle-command "holdem!" [_ args user-id channel-id]
   (cond
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [buy-in (or (try-parse-int (get args 0)) @default-buy-in)
+    :else (let [buy-in (or (try-parse-int (get args 0)) (:default-buy-in @config))
                 big-blind (quot buy-in 100)]
             (start-game!
               channel-id buy-in
-              (disp/new-game-message user-id @wait-time buy-in)
+              (disp/new-game-message user-id (:wait-time @config) buy-in)
               #(poker/start-new-game big-blind % (shuffle cards/deck) (calculate-budgets % buy-in {}))))))
 
 (defmethod handle-event :default [_ _])
@@ -141,15 +141,18 @@
       (defmethod handle-command command [_ _ user-id channel-id]
         (send-message! channel-id (disp/info-message user-id))))))
 
-(defn- start-bot! [{:keys [token wait-time timeout default-buy-in]}]
+(defmethod handle-event :ready [_ _]
+  (let [{bot-id :id bot-name :username} @(msgs/get-current-user! @message-ch)]
+    (def-ping-commands bot-id)
+    (conns/status-update! @connection-ch :activity (conns/create-activity :type :music :name (str \@ bot-name)))))
+
+(defn- start-bot! [{:keys [token] :as config}]
+  (reset! poker.discord.bot/config config)
   (let [event-ch (async/chan 100)
         connection-ch (conns/connect-bot! token event-ch)
         message-ch (msgs/start-connection! token)]
+    (reset! poker.discord.bot/connection-ch connection-ch)
     (reset! poker.discord.bot/message-ch message-ch)
-    (reset! poker.discord.bot/wait-time wait-time)
-    (reset! poker.discord.bot/timeout timeout)
-    (reset! poker.discord.bot/default-buy-in default-buy-in)
-    (def-ping-commands (:id @(msgs/get-current-user! message-ch)))
     (events/message-pump! event-ch handle-event)
     (msgs/stop-connection! message-ch)
     (conns/disconnect-bot! connection-ch)))
