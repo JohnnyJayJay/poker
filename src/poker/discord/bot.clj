@@ -16,10 +16,12 @@
 
 (defonce active-games (atom {}))
 (defonce waiting-channels (atom #{}))
-(defonce users-in-game (atom #{}))
 
 (defn calculate-budgets [players buy-in previous-budgets]
   (zipmap (sets/difference (set players) (set (keys previous-budgets))) (repeat buy-in)))
+
+(defn in-game? [user-id]
+  (some #(contains? % user-id) (map :players (vals @active-games))))
 
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
@@ -53,15 +55,12 @@
     (->> @(msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20)
          (remove :bot)
          (map :id)
-         (remove @users-in-game))))
+         (remove in-game?))))
 
 (defn notify-players! [{:keys [players] :as game}]
   (doseq [player players
           :let [{dm-id :id} @(msgs/create-dm! @message-ch player)]]
     (send-message! dm-id (disp/player-notification-message game player))))
-
-(defn in-game? [user-id]
-  (some #(contains? % user-id) (map :players (vals @active-games))))
 
 (defn remove-bust-outs [game]
   (update game :budgets #(into {} (filter (comp pos? second) %))))
