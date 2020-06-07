@@ -97,6 +97,8 @@
 (defn valid-move [{[current] :cycle :as game} user-id command]
   (and (= current user-id) (some #(and (= command (name (:action %))) %) (poker/possible-moves game))))
 
+; TODO better and more specific solution for move commands
+
 (doseq [move-cmd ["fold" "check" "call" "all-in"]]
   (defmethod handle-command move-cmd [_ _ user-id channel-id]
     (let [{:keys [move-channel] :as game} (get @active-games channel-id)]
