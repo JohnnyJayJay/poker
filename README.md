@@ -28,9 +28,9 @@ Here are a few impressions of what it looks like:
 
 The bot is public, you can invite it [here](https://discord.com/api/oauth2/authorize?client_id=461791942779338762&permissions=329792&scope=bot).
 
-I'm still looking for a way to host the bot long term, other than that, its functionality is near complete.
+It is currently not guaranteed to be online 24/7 since some things may still change, but it should be online 99% of the time now.
 
-If you can't wait and want to use it now, you are free to host and try it yourself:
+You are also free to host it yourself:
 1. Get [Leiningen](https://leiningen.org/)
 2. Clone this repo
 3. Put a `cofig.clj` file in the repo that looks like this:
