@@ -131,9 +131,10 @@
 (defmethod handle-command :default [_ _ _ _])
 
 (defmethod handle-event :message-create
-  [_ {{author-id :id} :author :keys [channel-id content]}]
-  (let [split (strings/split content #"\s+")]
-    (handle-command (first split) (subvec split 1) author-id channel-id)))
+  [_ {{author-id :id bot? :bot} :author :keys [channel-id content]}]
+  (if-not bot?
+    (let [split (strings/split content #"\s+")]
+      (handle-command (first split) (subvec split 1) author-id channel-id))))
 
 (defn def-ping-commands [bot-id]
   (let [mention (disp/user-mention bot-id)]
