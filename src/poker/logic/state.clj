@@ -67,7 +67,6 @@
                (mapv first)))
         (assoc pot :prize (quot money (count (:winners pot))))))
 
-; FIXME winner does not end up with higher
 (defn- award-prizes
   "Adds the individual prizes to the winners' budgets."
   [{:keys [pots] :as game}]
@@ -89,9 +88,9 @@
         award-prizes)))
 
 (defmethod transition :instant-win
-  [{:keys [players] [{:keys [money]}] :pots :as game}]
+  [{:keys [players] :as game}]
   (let [winner-id (first players)]
-    (-> game
-        (next-round 0 :instant-win)
-        (update-in [:pots 0] assoc :winners [winner-id])
-        (update-in [:budgets winner-id] + money))))
+    (as-> game game
+        (next-round game 0 :instant-win)
+        (update-in game [:pots 0] assoc :winners [winner-id])
+        (update-in game [:budgets winner-id] + (:money ((:pots game) 0))))))
