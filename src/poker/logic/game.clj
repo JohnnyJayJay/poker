@@ -101,12 +101,12 @@
 (defn possible-moves
   "Returns a vector of the possible moves the current player can make, consisting of a keyword and the associated cost.
   fold and all-in are always possible."
-  [game]
+  [{[current] :cycle :keys [budgets] :as game}]
   (let [maximum (possible-bet game)
         minimum (required-bet game)]
     (cond-> [{:action :fold :cost 0} {:action :all-in :cost maximum}]
             (zero? minimum) (conj {:action :check :cost 0})
-            (and (pos? minimum) (> maximum minimum)) (conj {:action :call :cost minimum})
+            (and (pos? minimum) (> (budgets current) minimum)) (conj {:action :call :cost minimum})
             (and (< (minimum-raise game) maximum) (> maximum minimum)) (conj {:action :raise :cost (minimum-raise game)}))))
 
 (defn- new-order
