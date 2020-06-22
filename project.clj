@@ -5,6 +5,7 @@
             :url  "https://firstdonoharm.dev/version/2/1/license.html"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/math.combinatorics "0.1.6"]
+                 [org.clojure/core.match "1.0.0"]
                  [org.suskalo/discljord "0.2.8"]]
   :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"]
   :main poker.discord.bot
