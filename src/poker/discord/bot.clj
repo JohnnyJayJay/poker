@@ -5,6 +5,7 @@
             [discljord.connections :as conns]
             [discljord.messaging :as msgs]
             [discljord.events :as events]
+            [discljord.formatting :refer [mention-user strike-through]]
             [clojure.core.async :as async]
             [clojure.string :as strings]
             [clojure.set :as sets]
@@ -80,7 +81,7 @@
                 channel-id buy-in
                 (disp/restart-game-message result (:wait-time @config) buy-in)
                 #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-          (msgs/delete-message! @message-ch channel-id join-message-id))))))
+          (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players.")))))))
 
 (defmulti handle-event (fn [type _] type))
 
@@ -137,7 +138,7 @@
       (handle-command (first split) (subvec split 1) author-id channel-id))))
 
 (defn def-ping-commands [bot-id]
-  (let [mention (disp/user-mention bot-id)]
+  (let [mention (mention-user bot-id)]
     (doseq [command [mention (strings/replace mention "@" "@!")]]
       (defmethod handle-command command [_ _ user-id channel-id]
         (send-message! channel-id (disp/info-message user-id))))))
