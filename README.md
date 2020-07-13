@@ -20,6 +20,8 @@ This is (roughly) how the logic part is used:
 
 ## Bot
 
+[![Discord Bots](https://top.gg/api/widget/461791942779338762.svg)](https://top.gg/bot/461791942779338762)
+
 Here are a few impressions of what it looks like:
 
 ![](https://i.imgur.com/zGCQoHN.png)

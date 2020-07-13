@@ -149,10 +149,9 @@
     (conns/status-update! @connection-ch :activity (conns/create-activity :type :music :name (str \@ bot-name)))))
 
 (defn- start-bot! [{:keys [token] :as config}]
-  (alter-var-root #'discljord.connections.impl/buffer-size (constantly 20000000))
   (reset! poker.discord.bot/config config)
   (let [event-ch (async/chan 100)
-        connection-ch (conns/connect-bot! token event-ch)
+        connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages})
         message-ch (msgs/start-connection! token)]
     (reset! poker.discord.bot/connection-ch connection-ch)
     (reset! poker.discord.bot/message-ch message-ch)
