@@ -53,35 +53,36 @@
   (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
   (async/go
     (async/<! (async/timeout (:wait-time @config)))
-    (->> @(msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20)
+    (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
          (remove :bot)
          (map :id)
          (remove in-game?))))
 
 (defn notify-players! [{:keys [players] :as game}]
-  (doseq [player players
-          :let [{dm-id :id} @(msgs/create-dm! @message-ch player)]]
-    (send-message! dm-id (disp/player-notification-message game player))))
+  (async/go
+    (doseq [player players
+            :let [{dm-id :id} (async/<! (msgs/create-dm! @message-ch player))]]
+      (send-message! dm-id (disp/player-notification-message game player)))))
 
 (defn remove-bust-outs [game]
   (update game :budgets #(into {} (filter (comp pos? second) %))))
 
 (defn start-game! [channel-id buy-in start-message start-fn]
-  (let [{join-message-id :id} @(send-message! channel-id start-message)]
-    (swap! waiting-channels conj channel-id)
-    (async/go
-      (let [players (async/<! (gather-players! channel-id join-message-id))]
-        (swap! waiting-channels disj channel-id)
-        (if (> (count players) 1)
-          (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
-            (notify-players! game)
-            (send-message! channel-id (disp/blinds-message game))
-            (let [{:keys [budgets] :as result} (-> game game-loop! async/<! remove-bust-outs)]
-              (start-game!
-                channel-id buy-in
-                (disp/restart-game-message result (:wait-time @config) buy-in)
-                #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-          (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players.")))))))
+  (async/go
+    (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))]
+      (swap! waiting-channels conj channel-id
+        (let [players (async/<! (gather-players! channel-id join-message-id))]
+          (swap! waiting-channels disj channel-id)
+          (if (> (count players) 1)
+            (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
+              (notify-players! game)
+              (send-message! channel-id (disp/blinds-message game))
+              (let [{:keys [budgets] :as result} (-> game game-loop! async/<! remove-bust-outs)]
+                (start-game!
+                  channel-id buy-in
+                  (disp/restart-game-message result (:wait-time @config) buy-in)
+                  #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
+            (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players."))))))))
 
 (defmulti handle-event (fn [type _] type))
 
