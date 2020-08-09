@@ -4,6 +4,7 @@
   :license {:name "Hippocratic 2.1"
             :url  "https://firstdonoharm.dev/version/2/1/license.html"}
   :dependencies [[org.clojure/clojure "1.10.0"]
+                 [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/core.match "1.0.0"]
                  [org.suskalo/discljord "1.1.0"]
