@@ -146,13 +146,12 @@
   - :budgets a map of player id -> budget (number)
   - :turns a counter to keep track of the amount of turns made in a betting round. It is reset when someone raises
   - :state the current state of the game. Possible states: :pre-flop, :flop, :turn, :river, :instant-win, :showdown"
-  [{:keys [order big-blind-value] :as game} player-ids cards new-budgets]
+  [{:keys [order big-blind-value small-blind-value] :as game} player-ids cards new-budgets]
   (let [players (set player-ids)
         [small-blind big-blind :as new-order] (new-order players order)
         [player-cards remaining-cards] (split-at (* 2 (count players)) cards)]
     (-> game
         (merge {:order           new-order
-                :big-blind-value big-blind-value
                 :small-blind     small-blind
                 :big-blind       big-blind
                 :live-order      new-order
@@ -170,7 +169,7 @@
         (update :budgets select-keys players)
         (update :budgets #(merge-with + % new-budgets))
         (dissoc :winner :prize :hands)
-        (bet (quot big-blind-value 2))
+        (bet small-blind-value)
         (bet big-blind-value)
         (update :turns dec))))
 
@@ -178,7 +177,7 @@
   "Starts a new game with the given players, cards, initial budgets and the big blind value.
   The big-blind-value is an integer denoting the big blind bet amount. The small blind will be half of that.
   The other parameters are the same as in restart-game."
-  [big-blind-value player-ids cards initial-budgets]
+  [big-blind-value small-blind-value player-ids cards initial-budgets]
   (restart-game {:big-blind-value big-blind-value
                  :order           ()
                  :budgets         {}}
