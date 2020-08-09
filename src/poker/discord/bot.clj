@@ -6,6 +6,8 @@
             [discljord.messaging :as msgs]
             [discljord.events :as events]
             [discljord.formatting :refer [mention-user strike-through]]
+            [discljord.permissions :as perms]
+            [discljord.events.state :refer [prepare-guild]]
             [clojure.core.async :as async]
             [clojure.string :as strings]
             [clojure.set :as sets]
@@ -49,14 +51,25 @@
                                  :fold (poker/fold game)
                                  :raise (poker/raise game amount)))))))))
 
+(defn has-permissions [channel-id]
+  (async/go
+    (let [{:keys [guild-id]} (async/<! (msgs/get-channel! @message-ch channel-id))
+          guild (prepare-guild (async/<! (msgs/get-guild! @message-ch guild-id)))
+          {:keys [id]} (async/<! (msgs/get-current-user! @message-ch))]
+      (perms/has-permissions?
+        #{:send-messages :read-message-history :add-reactions :use-external-emojis}
+        guild id channel-id))))
+
+
 (defn gather-players! [channel-id message-id]
   (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
   (async/go
     (async/<! (async/timeout (:wait-time @config)))
-    (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
-         (remove :bot)
-         (map :id)
-         (remove in-game?))))
+    (when (async/<! (has-permissions channel-id))
+      (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
+           (remove :bot)
+           (map :id)
+           (remove in-game?)))))
 
 (defn notify-players! [{:keys [players] :as game}]
   (async/go
