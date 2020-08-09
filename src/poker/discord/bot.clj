@@ -95,7 +95,7 @@
                   channel-id buy-in
                   (disp/restart-game-message result (:wait-time @config) buy-in)
                   #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-            (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players."))))))))
+            (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players (or the bot is lacking permissions)."))))))))
 
 (defmulti handle-event (fn [type _] type))
 
