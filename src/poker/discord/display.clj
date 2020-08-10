@@ -194,6 +194,7 @@
     "Hi, " (mention-user user-id) "!\n"
     "I am a Discord bot that allows you to play Poker (No limit Texas hold' em) against up to 19 other people in chat. "
     "To start a new game, simply type `holdem! <buy-in amount>`. The (optional) buy-in is the amount of chips everyone will start with.\n"
+    "You can also optionally set custom blinds, wait time, timeout by adding \"--small-blind <value>\", \"--big-blind <value>\", \"--wait-time <value>\" or \"--timeout <value>\" to the command respectively.\n"
     "Grab a bunch of friends and try it out!\n\n"
     "You can find links to invite the bot, to join the support server and to view the source code here: <https://top.gg/bot/461791942779338762>"))
 
