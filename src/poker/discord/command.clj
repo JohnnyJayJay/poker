@@ -6,7 +6,7 @@
     (Integer/valueOf s)
     (catch NumberFormatException _ nil)))
 
-(def poker-options
+(defn poker-options [default-wait-time default-timeout]
   [[nil "--buy-in VALUE" "Buy-in amount"
     :id :buy-in
     :parse-fn parse-int
@@ -24,17 +24,17 @@
     :parse-fn parse-int
     :validate [some? "Wait time must be a number"
                #(< 0 % 120000) "Wait time must be more than 0 and less than 120000 ms (2 minutes)"]
-    :default 25000]
+    :default default-wait-time]
    [nil "--timeout MILLISECONDS" "Inactive time until a player folds automatically"
     :id :timeout
     :parse-fn parse-int
     :validate [some? "Timeout must be a number"
                #(< 0 % 360000) "Timeout must be more than 0 and less than 360000 ms (6 minutes)"]
-    :default 180000]])
+    :default default-timeout]])
 
 (defn compute-buy-in
-  [{[buy-in-arg] :arguments :keys [buy-in] :as opt-map}]
-  (assoc opt-map :buy-in (or buy-in (some-> buy-in-arg parse-int) 1000)))
+  [{[buy-in-arg] :arguments :keys [buy-in] :as opt-map} default]
+  (assoc opt-map :buy-in (or buy-in (some-> buy-in-arg parse-int) default)))
 
 (defn compute-big-blind
   [{:keys [big-blind buy-in] :as opt-map}]
@@ -44,10 +44,10 @@
   [{:keys [small-blind big-blind] :as opt-map}]
   (assoc opt-map :small-blind (or small-blind (max 1 (quot big-blind 2)))))
 
-(defn parse-command [args]
+(defn parse-command [args {:keys [default-wait-time default-timeout default-buy-in] :as config}]
   (-> args
-      (cli/parse-opts poker-options)
-      compute-buy-in
+      (cli/parse-opts (poker-options default-wait-time default-timeout))
+      (compute-buy-in default-buy-in)
       compute-big-blind
       compute-small-blind))
 

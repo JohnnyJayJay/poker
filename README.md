@@ -38,9 +38,9 @@ You are also free to host it yourself:
 3. Put a `cofig.clj` file in the repo that looks like this:
 ```clj
 {:token           "TOKEN"
- :wait-time       25000   ; The number of milliseconds to wait for players when starting a game
+ :default-wait-time       25000   ; The default number of milliseconds to wait for players when starting a game
  :default-buy-in  1000    ; The default buy-in if none is specified when running "holdem!"
- :timeout         180000} ; The number of milliseconds after which the current player, if they have not made a move, will fold automatically
+ :default-timeout         180000} ; The default number of milliseconds after which the current player, if they have not made a move, will fold automatically
 ```
 4. Run `lein run`
 

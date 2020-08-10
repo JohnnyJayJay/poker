@@ -16,6 +16,7 @@
 
 (defonce connection-ch (atom nil))
 (defonce message-ch (atom nil))
+(defonce config (atom nil))
 
 (defonce active-games (atom {}))
 (defonce waiting-channels (atom #{}))
@@ -134,7 +135,7 @@
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [{:keys [buy-in big-blind small-blind wait-time timeout errors]} (cmd/parse-command args)]
+    :else (let [{:keys [buy-in big-blind small-blind wait-time timeout errors]} (cmd/parse-command args @config)]
             (if errors
               (send-message! channel-id (str "Invalid command!\n\n" (strings/join "\n- " errors)))
               (start-game!
@@ -164,6 +165,7 @@
     (conns/status-update! @connection-ch :activity (conns/create-activity :type :music :name (str \@ bot-name)))))
 
 (defn- start-bot! [{:keys [token] :as config}]
+  (reset! poker.discord.bot/config config)
   (let [event-ch (async/chan 100)
         connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages})
         message-ch (msgs/start-connection! token)]
