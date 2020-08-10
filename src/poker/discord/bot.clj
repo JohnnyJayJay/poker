@@ -2,6 +2,7 @@
   (:require [poker.logic.game :as poker]
             [poker.logic.core :as cards]
             [poker.discord.display :as disp]
+            [poker.discord.command :as cmd]
             [discljord.connections :as conns]
             [discljord.messaging :as msgs]
             [discljord.events :as events]
@@ -15,7 +16,6 @@
 
 (defonce connection-ch (atom nil))
 (defonce message-ch (atom nil))
-(defonce config (atom nil))
 
 (defonce active-games (atom {}))
 (defonce waiting-channels (atom #{}))
@@ -29,7 +29,7 @@
 (defn send-message! [channel-id content]
   (msgs/create-message! @message-ch channel-id :content content))
 
-(defn game-loop! [game]
+(defn game-loop! [game timeout]
   (async/go-loop [{:keys [state channel-id move-channel] :as game} game]
     (swap! active-games assoc channel-id game)
     (send-message! channel-id (disp/game-state-message game))
@@ -41,9 +41,9 @@
       (do
         (send-message! channel-id (disp/turn-message game))
         (async/alt!
-          (async/timeout (:timeout @config)) (do
-                                               (send-message! channel-id (disp/timed-out-message game))
-                                               (recur (poker/fold game)))
+          (async/timeout timeout) (do
+                                    (send-message! channel-id (disp/timed-out-message game))
+                                    (recur (poker/fold game)))
           move-channel ([{:keys [action amount]}]
                         (recur (case action
                                  (:check :call) (poker/call game)
@@ -61,10 +61,10 @@
         guild id channel-id))))
 
 
-(defn gather-players! [channel-id message-id]
+(defn gather-players! [channel-id message-id wait-time]
   (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
   (async/go
-    (async/<! (async/timeout (:wait-time @config)))
+    (async/<! (async/timeout wait-time))
     (when (async/<! (has-permissions channel-id))
       (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
            (remove :bot)
@@ -80,20 +80,20 @@
 (defn remove-bust-outs [game]
   (update game :budgets #(into {} (filter (comp pos? second) %))))
 
-(defn start-game! [channel-id buy-in start-message start-fn]
+(defn start-game! [channel-id buy-in wait-time timeout start-message start-fn]
   (async/go
     (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))]
       (swap! waiting-channels conj channel-id
-        (let [players (async/<! (gather-players! channel-id join-message-id))]
+        (let [players (async/<! (gather-players! channel-id join-message-id wait-time))]
           (swap! waiting-channels disj channel-id)
           (if (> (count players) 1)
             (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
               (notify-players! game)
               (send-message! channel-id (disp/blinds-message game))
-              (let [{:keys [budgets] :as result} (-> game game-loop! async/<! remove-bust-outs)]
+              (let [{:keys [budgets] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)]
                 (start-game!
-                  channel-id buy-in
-                  (disp/restart-game-message result (:wait-time @config) buy-in)
+                  channel-id buy-in wait-time timeout
+                  (disp/restart-game-message result wait-time buy-in)
                   #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
             (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players (or the bot is lacking permissions)."))))))))
 
@@ -134,12 +134,13 @@
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [buy-in (max 100 (or (try-parse-int (get args 0)) (:default-buy-in @config)))
-                big-blind (quot buy-in 100)]
-            (start-game!
-              channel-id buy-in
-              (disp/new-game-message user-id (:wait-time @config) buy-in)
-              #(poker/start-new-game big-blind % (shuffle cards/deck) (calculate-budgets % buy-in {}))))))
+    :else (let [{:keys [buy-in big-blind small-blind wait-time timeout errors]} (cmd/parse-command args)]
+            (if errors
+              (send-message! channel-id (str "Invalid command!\n\n" (strings/join "\n- " errors)))
+              (start-game!
+                channel-id buy-in wait-time timeout
+                (disp/new-game-message user-id wait-time buy-in)
+                #(poker/start-new-game big-blind small-blind % (shuffle cards/deck) (calculate-budgets % buy-in {})))))))
 
 (defmethod handle-event :default [_ _])
 
@@ -163,7 +164,6 @@
     (conns/status-update! @connection-ch :activity (conns/create-activity :type :music :name (str \@ bot-name)))))
 
 (defn- start-bot! [{:keys [token] :as config}]
-  (reset! poker.discord.bot/config config)
   (let [event-ch (async/chan 100)
         connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages})
         message-ch (msgs/start-connection! token)]
