@@ -54,9 +54,13 @@
 
 (defn has-permissions [channel-id]
   (async/go
-    (let [{:keys [guild-id]} (async/<! (msgs/get-channel! @message-ch channel-id))
-          guild (prepare-guild (async/<! (msgs/get-guild! @message-ch guild-id)))
-          {:keys [id]} (async/<! (msgs/get-current-user! @message-ch))]
+    (let [{:keys [guild-id] :as channel} (async/<! (msgs/get-channel! @message-ch channel-id))
+          {:keys [id]} (async/<! (msgs/get-current-user! @message-ch))
+          member (async/<! (msgs/get-guild-member! @message-ch guild-id id))
+          guild (-> (async/<! (msgs/get-guild! @message-ch guild-id))
+                    (assoc :channels [channel])
+                    (assoc :members [member])
+                    (prepare-guild))]
       (perms/has-permissions?
         #{:send-messages :read-message-history :add-reactions :use-external-emojis}
         guild id channel-id))))
