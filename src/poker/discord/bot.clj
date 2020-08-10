@@ -84,19 +84,19 @@
 (defn start-game! [channel-id buy-in wait-time timeout start-message start-fn]
   (async/go
     (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))]
-      (swap! waiting-channels conj channel-id
-        (let [players (async/<! (gather-players! channel-id join-message-id wait-time))]
-          (swap! waiting-channels disj channel-id)
-          (if (> (count players) 1)
-            (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
-              (notify-players! game)
-              (send-message! channel-id (disp/blinds-message game))
-              (let [{:keys [budgets] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)]
-                (start-game!
-                  channel-id buy-in wait-time timeout
-                  (disp/restart-game-message result wait-time buy-in)
-                  #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-            (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players (or the bot is lacking permissions)."))))))))
+      (swap! waiting-channels conj channel-id)
+      (let [players (async/<! (gather-players! channel-id join-message-id wait-time))]
+        (swap! waiting-channels disj channel-id)
+        (if (> (count players) 1)
+          (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
+            (notify-players! game)
+            (send-message! channel-id (disp/blinds-message game))
+            (let [{:keys [budgets] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)]
+              (start-game!
+                channel-id buy-in wait-time timeout
+                (disp/restart-game-message result wait-time buy-in)
+                #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
+          (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players (or the bot is lacking permissions).")))))))
 
 (defmulti handle-event (fn [type _] type))
 
@@ -135,9 +135,9 @@
     (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
     (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
     (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [{:keys [buy-in big-blind small-blind wait-time timeout errors]} (cmd/parse-command args @config)]
+    :else (let [{{:keys [buy-in big-blind small-blind wait-time timeout]} :options :keys [errors]} (cmd/parse-command args @config)]
             (if errors
-              (send-message! channel-id (str "Invalid command!\n\n" (strings/join "\n- " errors)))
+              (send-message! channel-id (str "Invalid command!\n\n- " (strings/join "\n- " errors)))
               (start-game!
                 channel-id buy-in wait-time timeout
                 (disp/new-game-message user-id wait-time buy-in)

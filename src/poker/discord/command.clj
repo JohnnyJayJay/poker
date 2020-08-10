@@ -45,10 +45,7 @@
   (assoc opt-map :small-blind (or small-blind (max 1 (quot big-blind 2)))))
 
 (defn parse-command [args {:keys [default-wait-time default-timeout default-buy-in] :as config}]
-  (-> args
-      (cli/parse-opts (poker-options default-wait-time default-timeout))
-      (compute-buy-in default-buy-in)
-      compute-big-blind
-      compute-small-blind))
+  (-> (cli/parse-opts args (poker-options default-wait-time default-timeout))
+      (update :options (comp compute-small-blind compute-big-blind #(compute-buy-in % default-buy-in)))))
 
 
