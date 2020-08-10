@@ -33,8 +33,8 @@
     :default default-timeout]])
 
 (defn compute-buy-in
-  [{[buy-in-arg] :arguments :keys [buy-in] :as opt-map} default]
-  (assoc opt-map :buy-in (or buy-in (some-> buy-in-arg parse-int) default)))
+  [{[buy-in-arg] :arguments {:keys [buy-in]} :options :as parsed} default]
+  (assoc-in parsed [:options :buy-in] (or (some-> buy-in-arg parse-int) buy-in default)))
 
 (defn compute-big-blind
   [{:keys [big-blind buy-in] :as opt-map}]
@@ -46,6 +46,7 @@
 
 (defn parse-command [args {:keys [default-wait-time default-timeout default-buy-in] :as config}]
   (-> (cli/parse-opts args (poker-options default-wait-time default-timeout))
-      (update :options (comp compute-small-blind compute-big-blind #(compute-buy-in % default-buy-in)))))
+      (compute-buy-in default-buy-in)
+      (update :options (comp compute-small-blind compute-big-blind))))
 
 

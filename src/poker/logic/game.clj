@@ -179,6 +179,7 @@
   The other parameters are the same as in restart-game."
   [big-blind-value small-blind-value player-ids cards initial-budgets]
   (restart-game {:big-blind-value big-blind-value
+                 :small-blind-value small-blind-value
                  :order           ()
                  :budgets         {}}
                 player-ids
