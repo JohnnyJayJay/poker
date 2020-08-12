@@ -149,9 +149,9 @@
     "You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!\n"
     "Everybody will start with `" buy-in "` chips."))
 
-(defn blinds-message [{:keys [big-blind small-blind big-blind-value]}]
+(defn blinds-message [{:keys [big-blind small-blind big-blind-value small-blind-value]}]
   (str
-    (mention-user small-blind) " places the small blind of `" (quot big-blind-value 2) "` chips.\n"
+    (mention-user small-blind) " places the small blind of `" small-blind-value "` chips.\n"
     (mention-user big-blind) " places the big blind of `" big-blind-value "` chips."))
 
 
