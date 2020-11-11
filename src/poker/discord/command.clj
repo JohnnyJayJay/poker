@@ -6,6 +6,10 @@
     (Integer/valueOf s)
     (catch NumberFormatException _ nil)))
 
+(defn- s->ms [num]
+  (when num
+    (* 1000 num)))
+
 (defn poker-options [default-wait-time default-timeout]
   [[nil "--buy-in VALUE" "Buy-in amount"
     :id :buy-in
@@ -21,13 +25,13 @@
     :validate [pos? "Small blind must be a positive number"]]
    [nil "--wait-time SECONDS" "Time to wait before match start"
     :id :wait-time
-    :parse-fn (comp (partial * 1000) parse-int)
+    :parse-fn (comp s->ms parse-int)
     :validate [some? "Wait time must be a number"
                #(< 0 % 600000) "Wait time must be more than 0 and less than 600s (10 minutes)"]
     :default default-wait-time]
    [nil "--timeout SECONDS" "Inactive time until a player folds automatically"
     :id :timeout
-    :parse-fn (comp (partial * 1000) parse-int)
+    :parse-fn (comp s->ms parse-int)
     :validate [some? "Timeout must be a number"
                #(< 0 % 360000) "Timeout must be more than 0 and less than 360s (6 minutes)"]
     :default default-timeout]])
