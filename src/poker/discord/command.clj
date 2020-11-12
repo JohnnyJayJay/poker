@@ -10,19 +10,20 @@
   (when num
     (* 1000 num)))
 
+
 (defn poker-options [default-wait-time default-timeout]
   [[nil "--buy-in VALUE" "Buy-in amount"
     :id :buy-in
     :parse-fn parse-int
     :validate [pos? "Buy-in must be a positive number"]]
-   [nil "--big-blind VALUE" "Big blind amount"
+   [nil "--small-blind VALUE" "Small blind amount"
     :id :small-blind
     :parse-fn parse-int
-    :validate [pos? "Big blind must be a positive number"]]
-   [nil "--small-blind VALUE" "Small blind amount"
+    :validate [pos? "Small blind must be a positive number"]]
+   [nil "--big-blind VALUE" "Big blind amount"
     :id :big-blind
     :parse-fn parse-int
-    :validate [pos? "Small blind must be a positive number"]]
+    :validate [pos? "Big blind must be a positive number"]]
    [nil "--wait-time SECONDS" "Time to wait before match start"
     :id :wait-time
     :parse-fn (comp s->ms parse-int)

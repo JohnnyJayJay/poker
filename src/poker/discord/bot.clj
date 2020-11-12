@@ -161,7 +161,7 @@
   (let [mention (mention-user bot-id)]
     (doseq [command [mention (strings/replace mention "@" "@!")]]
       (defmethod handle-command command [_ _ user-id channel-id]
-        (send-message! channel-id (disp/info-message user-id))))))
+        (send-message! channel-id (disp/info-message config user-id))))))
 
 (defmethod handle-event :ready [_ _]
   (let [{bot-id :id bot-name :username} @(msgs/get-current-user! @message-ch)]

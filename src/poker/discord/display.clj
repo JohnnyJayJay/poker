@@ -5,7 +5,9 @@
   (:require [poker.logic.pots :as pots]
             [poker.logic.game :as poker]
             [clojure.string :as strings]
-            [discljord.formatting :refer [mention-emoji mention-user]]))
+            [clojure.tools.cli :as cli]
+            [poker.discord.command :as cmd]
+            [discljord.formatting :refer [mention-emoji mention-user code-block]]))
 
 (def ^:private black-ranks
   {:ace   623575870375985162
@@ -189,12 +191,15 @@
     (str "You must raise to an amount between `" minimum "` and `"
          (poker/possible-bet game) "` chips. E.g.: `raise " minimum "`")))
 
-(defn info-message [user-id]
+(defn info-message [{:keys [default-wait-time default-timeout]} user-id]
   (str
     "Hi, " (mention-user user-id) "!\n"
     "I am a Discord bot that allows you to play Poker (No limit Texas hold' em) against up to 19 other people in chat. "
     "To start a new game, simply type `holdem! <buy-in amount>`. The (optional) buy-in is the amount of chips everyone will start with.\n"
-    "You can also optionally set custom blinds, wait time, timeout by adding \"--small-blind <value>\", \"--big-blind <value>\", \"--wait-time <value>\" or \"--timeout <value>\" to the command respectively.\n"
+    (->> (cli/parse-opts [] (cmd/poker-options default-wait-time default-timeout))
+        :summary
+        (str "Here are the options for the command (option, default value, description):\n")
+        code-block) \newline
     "Grab a bunch of friends and try it out!\n\n"
     "You can find links to invite the bot, to join the support server and to view the source code here: <https://top.gg/bot/461791942779338762>"))
 
