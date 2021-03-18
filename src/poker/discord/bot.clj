@@ -70,14 +70,16 @@
   (run! (partial msgs/create-reaction! @message-ch channel-id message-id)
        [disp/handshake-emoji disp/fast-forward-emoji disp/x-emoji])
   (async/go
-    (async/alt!
-      [(async/timeout wait-time) start-now] (if (async/<! (has-permissions channel-id))
-                                              (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
-                                                   (remove :bot)
-                                                   (map :id)
-                                                   (remove in-game?))
-                                              :no-perms)
-      abort :aborted)))
+    (let [timeout (async/timeout wait-time)
+          [_ ch] (async/alts! [abort start-now timeout])]
+      (if (= ch abort)
+        :aborted
+        (if (async/<! (has-permissions channel-id))
+          (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
+               (remove :bot)
+               (map :id)
+               (remove in-game?))
+          :no-perms)))))
 
 (defn notify-players! [{:keys [players] :as game}]
   (async/go
@@ -110,24 +112,24 @@
           :else (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
                   (notify-players! game)
                   (send-message! channel-id (disp/blinds-message game))
-                  (let [{:keys [budgets winners] :as result}
-                        (-> game (game-loop! timeout) async/<! remove-bust-outs)]
+                  (let [{:keys [budgets winners] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)
+                        new-initiator (if (contains? budgets initiator) ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
+                                        initiator
+                                        (reduce (partial max-key budgets) winners))]
                     (start-game!
                       channel-id
-                      (if (contains? budgets initiator) ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
-                        initiator
-                        (reduce (partial max-key budgets) winners))
+                      new-initiator
                       buy-in
                       wait-time
                       timeout
-                      (disp/restart-game-message result wait-time buy-in)
+                      (disp/restart-game-message new-initiator result wait-time buy-in)
                       #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets))))))))))
 
 (defmethod handle-event :message-reaction-add
-  [_ {:keys [channel-id user-id message-id] {emoji :name} :emoji}]
+  [_ {:keys [channel-id user-id message-id] {emoji :name} :emoji :as data}]
   (if-let [{:keys [initiator abort-ch start-now-ch msg]} (@waiting-channels channel-id)]
     (when (and (= msg message-id) (= initiator user-id))
-      (case emoji
+      (condp = emoji
         disp/fast-forward-emoji (async/close! start-now-ch)
         disp/x-emoji (async/close! abort-ch)
         nil))))
@@ -199,7 +201,7 @@
 (defn- start-bot! [{:keys [token] :as config}]
   (reset! poker.discord.bot/config config)
   (let [event-ch (async/chan 100)
-        connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages})
+        connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages :guild-message-reactions})
         message-ch (msgs/start-connection! token)]
     (reset! poker.discord.bot/connection-ch connection-ch)
     (reset! poker.discord.bot/message-ch message-ch)

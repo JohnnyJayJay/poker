@@ -7,7 +7,8 @@
             [clojure.string :as strings]
             [clojure.tools.cli :as cli]
             [poker.discord.command :as cmd]
-            [discljord.formatting :refer [mention-emoji mention-user code-block]]))
+            [discljord.formatting :refer [mention-emoji mention-user code-block]]
+            [clojure.string :as string]))
 
 (def ^:private black-ranks
   {:ace   623575870375985162
@@ -59,24 +60,30 @@
    :diamonds 623564440926683148
    nil       714565093798576455})
 
-(defn- halves-str [cards upper]
+(defn- halves-str [cards upper separate-at]
   (let [keyfn (if upper (juxt :suit :rank) :suit)
-        halves-map (if upper upper-halves lower-halves)]
-    (strings/join
+        halves-map (if upper upper-halves lower-halves)
+        emotes (->> cards
+                    (map keyfn)
+                    (map halves-map)
+                    (map mention-emoji))]
+    (string/join
       " "
-      (->> cards
-           (map keyfn)
-           (map halves-map)
-           (map mention-emoji)))))
+      (if separate-at
+        (let [[left right] (split-at separate-at emotes)]
+          (concat left ["    "] right))
+        emotes))))
+
 
 (defn cards->str
-  ([cards fill-to]
+  ([cards separate-at fill-to]
    (let [cards (concat cards (repeat (- fill-to (count cards)) nil))]
      (str
-       (halves-str cards true)
+       (halves-str cards true separate-at)
        "\n"
-       (halves-str cards false))))
-  ([cards] (cards->str cards 0)))
+       (halves-str cards false separate-at))))
+  ([cards separate-at] (cards->str cards separate-at 0))
+  ([cards] (cards->str cards nil)))
 
 (defn- pots->str [pots]
   (strings/join
@@ -89,7 +96,7 @@
   [{:keys [community-cards] :as game}]
   (str
     "**Community Cards:**\n"
-    (cards->str community-cards 5) "\n"
+    (cards->str community-cards nil 5) "\n"
     (pots->str (:pots (pots/flush-bets game)))))
 
 (defn- move->str [{:keys [action cost]}]
@@ -113,7 +120,7 @@
     "\n"
     (map (fn [[player-id {:keys [name cards]}]]
            (str (mention-user player-id) " - " name "\n"
-                (cards->str cards) " (had " (cards->str (player-cards player-id)) ")"))
+                (cards->str (concat cards (player-cards player-id)) 5)))
          hands)))
 
 (defn- pot-win->str
@@ -144,17 +151,22 @@
     "Those are the participants, in order: " (strings/join ", " (map mention-user order)) "\n"
     "**Have fun!** :black_joker:"))
 
-(def handshake-emoji "\uD83E\uDD1D")
+(def ^:const handshake-emoji "\uD83E\uDD1D")
 
-(def fast-forward-emoji "\u23E9")
+(def ^:const fast-forward-emoji "\u23E9")
 
-(def x-emoji "\u274C")
+(def ^:const x-emoji "\u274C")
+
+(defn- host-message [player-id]
+  (str (mention-user player-id)
+       " is the host of the game and can :x: abort it or :fast_forward: start it immediately."))
 
 (defn new-game-message [player-id timeout buy-in]
   (str
     (mention-user player-id) " wants to play Poker!\n"
     "You have " (quot timeout 1000) " seconds to join by reacting with :handshake:!\n"
-    "Everybody will start with `" buy-in "` chips."))
+    "Everybody will start with `" buy-in "` chips.\n\n"
+    (host-message player-id)))
 
 (defn blinds-message [{:keys [big-blind small-blind big-blind-value small-blind-value]}]
   (str
@@ -169,14 +181,15 @@
            (str (mention-user player-id) " - `" budget "` chips"))
          budgets)))
 
-(defn restart-game-message [{:keys [budgets]} timeout buy-in]
+(defn restart-game-message [player-id {:keys [budgets]} timeout buy-in]
   (str
     "This round of the game is over, but you can keep playing!\n"
     "Players of the last round, you now have:\n"
     (budgets->str budgets) "\n\n"
     "You will enter the next round with this if you continue playing.\n"
     "New players can also join! They will start with `" buy-in "` chips.\n"
-    "If you want to play, react with :handshake: within the next " (quot timeout 1000) " seconds."))
+    "If you want to play, react with :handshake: within the next " (quot timeout 1000) " seconds.\n\n"
+    (host-message player-id)))
 
 (defn already-ingame-message [user-id]
   (str "You are already in a game, " (mention-user user-id) "!"))
