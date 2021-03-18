@@ -145,6 +145,10 @@
 
 (def handshake-emoji "\uD83E\uDD1D")
 
+(def fast-forward-emoji "\u23E9")
+
+(def x-emoji "\u274C")
+
 (defn new-game-message [player-id timeout buy-in]
   (str
     (mention-user player-id) " wants to play Poker!\n"

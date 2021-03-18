@@ -19,7 +19,7 @@
 (defonce config (atom nil))
 
 (defonce active-games (atom {}))
-(defonce waiting-channels (atom #{}))
+(defonce waiting-channels (atom {}))
 
 (defn calculate-budgets [players buy-in previous-budgets]
   (zipmap (sets/difference (set players) (set (keys previous-budgets))) (repeat buy-in)))
@@ -66,15 +66,18 @@
         guild id channel-id))))
 
 
-(defn gather-players! [channel-id message-id wait-time]
-  (msgs/create-reaction! @message-ch channel-id message-id disp/handshake-emoji)
+(defn gather-players! [channel-id message-id start-now abort wait-time]
+  (run! (partial msgs/create-reaction! @message-ch channel-id message-id)
+       [disp/handshake-emoji disp/fast-forward-emoji disp/x-emoji])
   (async/go
-    (async/<! (async/timeout wait-time))
-    (when (async/<! (has-permissions channel-id))
-      (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
-           (remove :bot)
-           (map :id)
-           (remove in-game?)))))
+    (async/alt!
+      [(async/timeout wait-time) start-now] (if (async/<! (has-permissions channel-id))
+                                              (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
+                                                   (remove :bot)
+                                                   (map :id)
+                                                   (remove in-game?))
+                                              :no-perms)
+      abort :aborted)))
 
 (defn notify-players! [{:keys [players] :as game}]
   (async/go
@@ -85,24 +88,49 @@
 (defn remove-bust-outs [game]
   (update game :budgets #(into {} (filter (comp pos? second) %))))
 
-(defn start-game! [channel-id buy-in wait-time timeout start-message start-fn]
-  (async/go
-    (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))]
-      (swap! waiting-channels conj channel-id)
-      (let [players (async/<! (gather-players! channel-id join-message-id wait-time))]
-        (swap! waiting-channels disj channel-id)
-        (if (> (count players) 1)
-          (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
-            (notify-players! game)
-            (send-message! channel-id (disp/blinds-message game))
-            (let [{:keys [budgets] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)]
-              (start-game!
-                channel-id buy-in wait-time timeout
-                (disp/restart-game-message result wait-time buy-in)
-                #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets)))))
-          (msgs/edit-message! @message-ch channel-id join-message-id :content (str (strike-through start-message) \newline "Not enough players (or the bot is lacking permissions).")))))))
-
 (defmulti handle-event (fn [type _] type))
+
+(defn start-game! [channel-id initiator buy-in wait-time timeout start-message start-fn]
+  (async/go
+    (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))
+          start-now (async/chan)
+          abort (async/chan)]
+      (swap! waiting-channels assoc channel-id
+             {:msg join-message-id :initiator initiator :start-now-ch start-now :abort-ch abort})
+      (let [players (async/<! (gather-players! channel-id join-message-id start-now abort wait-time))
+            edit-msg (fn [additional-content]
+                       (msgs/edit-message! @message-ch channel-id join-message-id
+                                           :content (str (strike-through start-message)
+                                                         \newline additional-content)))]
+        (swap! waiting-channels dissoc channel-id)
+        (cond
+          (= players :aborted) (edit-msg "The game was aborted.")
+          (= players :no-perms) (edit-msg (str "The bot is lacking permissions. Make sure it can read the message history of this channel."))
+          (<= (count players) 1) (edit-msg "Not enough players.")
+          :else (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
+                  (notify-players! game)
+                  (send-message! channel-id (disp/blinds-message game))
+                  (let [{:keys [budgets winners] :as result}
+                        (-> game (game-loop! timeout) async/<! remove-bust-outs)]
+                    (start-game!
+                      channel-id
+                      (if (contains? budgets initiator) ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
+                        initiator
+                        (reduce (partial max-key budgets) winners))
+                      buy-in
+                      wait-time
+                      timeout
+                      (disp/restart-game-message result wait-time buy-in)
+                      #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets))))))))))
+
+(defmethod handle-event :message-reaction-add
+  [_ {:keys [channel-id user-id message-id] {emoji :name} :emoji}]
+  (if-let [{:keys [initiator abort-ch start-now-ch msg]} (@waiting-channels channel-id)]
+    (when (and (= msg message-id) (= initiator user-id))
+      (case emoji
+        disp/fast-forward-emoji (async/close! start-now-ch)
+        disp/x-emoji (async/close! abort-ch)
+        nil))))
 
 (defn try-parse-int [str]
   (try
@@ -143,7 +171,7 @@
             (if errors
               (send-message! channel-id (str "Invalid command!\n\n- " (strings/join "\n- " errors)))
               (start-game!
-                channel-id buy-in wait-time timeout
+                channel-id user-id buy-in wait-time timeout
                 (disp/new-game-message user-id wait-time buy-in)
                 #(poker/start-new-game big-blind small-blind % (shuffle cards/deck) (calculate-budgets % buy-in {})))))))
 
