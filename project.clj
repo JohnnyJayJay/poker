@@ -7,7 +7,7 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/core.match "1.0.0"]
-                 [org.suskalo/discljord "1.1.1"]
+                 [org.suskalo/discljord "1.2.2"]
                  [org.apache.logging.log4j/log4j-core "2.13.3"]
                  [org.apache.logging.log4j/log4j-api "2.13.3"]]
   :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"

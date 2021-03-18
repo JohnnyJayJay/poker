@@ -9,6 +9,7 @@
             [discljord.formatting :refer [mention-user strike-through]]
             [discljord.permissions :as perms]
             [discljord.events.state :refer [prepare-guild]]
+            [discljord.util :refer [parse-if-str]]
             [clojure.core.async :as async]
             [clojure.string :as strings]
             [clojure.set :as sets]
@@ -60,6 +61,7 @@
           guild (-> (async/<! (msgs/get-guild! @message-ch guild-id))
                     (assoc :channels [channel])
                     (assoc :members [member])
+                    (update :roles (fn [roles] (mapv #(update % :permissions parse-if-str) roles)))
                     (prepare-guild))]
       (perms/has-permissions?
         #{:send-messages :read-message-history :add-reactions :use-external-emojis}

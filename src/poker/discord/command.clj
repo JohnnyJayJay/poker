@@ -12,25 +12,25 @@
 
 
 (defn poker-options [default-wait-time default-timeout]
-  [[nil "--buy-in VALUE" "Buy-in amount"
+  [["-c" "--buy-in VALUE" "Buy-in amount"
     :id :buy-in
     :parse-fn parse-int
     :validate [pos? "Buy-in must be a positive number"]]
-   [nil "--small-blind VALUE" "Small blind amount"
+   ["-s" "--small-blind VALUE" "Small blind amount"
     :id :small-blind
     :parse-fn parse-int
     :validate [pos? "Small blind must be a positive number"]]
-   [nil "--big-blind VALUE" "Big blind amount"
+   ["-b" "--big-blind VALUE" "Big blind amount"
     :id :big-blind
     :parse-fn parse-int
     :validate [pos? "Big blind must be a positive number"]]
-   [nil "--wait-time SECONDS" "Time to wait before match start"
+   ["-w" "--wait-time SECONDS" "Time to wait before match start"
     :id :wait-time
     :parse-fn (comp s->ms parse-int)
     :validate [some? "Wait time must be a number"
                #(< 0 % 600000) "Wait time must be more than 0 and less than 600s (10 minutes)"]
     :default default-wait-time]
-   [nil "--timeout SECONDS" "Inactive time until a player folds automatically"
+   ["-t" "--timeout SECONDS" "Inactive time until a player folds automatically"
     :id :timeout
     :parse-fn (comp s->ms parse-int)
     :validate [some? "Timeout must be a number"
