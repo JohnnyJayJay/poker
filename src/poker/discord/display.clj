@@ -108,11 +108,12 @@
     "Everybody except " (mention-user winner) " has folded!\n"
     "They win the main pot of `" money "` chips."))
 
-(defn- hands->str [hands]
+(defn- hands->str [hands player-cards]
   (strings/join
     "\n"
     (map (fn [[player-id {:keys [name cards]}]]
-           (str (mention-user player-id) " - " name "\n" (cards->str cards)))
+           (str (mention-user player-id) " - " name "\n"
+                (cards->str cards) " (had " (cards->str (player-cards player-id)) ")"))
          hands)))
 
 (defn- pot-win->str
@@ -125,10 +126,10 @@
   (strings/join "\n" (map pot-win->str pots)))
 
 (defn showdown-message
-  [{:keys [hands pots]}]
+  [{:keys [hands pots player-cards]}]
   (str
     "**Showdown!** Let's have a look at the hands...\n\n"
-    (hands->str hands)
+    (hands->str hands player-cards)
     "\n\nThis means that:\n"
     (wins->str pots)))
 
