@@ -59,7 +59,11 @@
           {:keys [id]} (async/<! (msgs/get-current-user! @message-ch))
           member (async/<! (msgs/get-guild-member! @message-ch guild-id id))
           guild (-> (async/<! (msgs/get-guild! @message-ch guild-id))
-                    (assoc :channels [channel])
+                    (assoc :channels [(update channel :permission-overwrites
+                                              (fn [overrides]
+                                                (mapv #(-> % (update :allow parse-if-str)
+                                                           (update :deny parse-if-str))
+                                                      overrides)))])
                     (assoc :members [member])
                     (update :roles (fn [roles] (mapv #(update % :permissions parse-if-str) roles)))
                     (prepare-guild))]
@@ -115,9 +119,11 @@
                   (notify-players! game)
                   (send-message! channel-id (disp/blinds-message game))
                   (let [{:keys [budgets winners] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)
-                        new-initiator (if (contains? budgets initiator) ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
-                                        initiator
-                                        (reduce (partial max-key budgets) winners))]
+                        new-initiator (cond
+                                        ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
+                                        (contains? budgets initiator) initiator
+                                        (= (count winners) 1) (first winners)
+                                        :else (reduce (partial max-key budgets) winners))]
                     (start-game!
                       channel-id
                       new-initiator
