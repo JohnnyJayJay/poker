@@ -207,7 +207,7 @@
 
 (defn- start-bot! [{:keys [token] :as config}]
   (reset! poker.discord.bot/config config)
-  (let [event-ch (async/chan 100)
+  (let [event-ch (async/chan 10000)
         connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages :guild-message-reactions})
         message-ch (msgs/start-connection! token)]
     (reset! poker.discord.bot/connection-ch connection-ch)
