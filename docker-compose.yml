@@ -1,0 +1,6 @@
+version: "3.9"
+services:
+  poker:
+    build: .
+    restart: on-failure
+
