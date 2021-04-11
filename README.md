@@ -49,11 +49,12 @@ You are also free to host it yourself (either manually or using Docker):
    ```
 4. Run `lein run` or `docker-compose up`
 
-
+Note that your bot needs to be on the [playing cards emoji server](https://discord.gg/sJB2xjK) for it to work out of the box. I am not the owner of that server, so I can't help with adding your bot there. Please be mindful of the server owner and don't annoy them.\
+You can also use your own custom emojis. For that, you'll have to modify the emoji ids in `poker.discord.display`.
 
 ## License
 
-Copyright © 2020 JohnnyJayJay
+Copyright © 2020-2021 JohnnyJayJay
 
 This program and the accompanying materials are made available under the
 terms of the Hippocratic License 2.1 which is available at
