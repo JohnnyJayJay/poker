@@ -1,6 +1,6 @@
 # Privacy Policy
 
-In the following, "Poker" refers to the Discord application "Poker", created by me, Johnny.
+In the following, "Poker" refers to the Discord application "Poker#8566", created by me, Johnny.
 "Server" or "guild" means "Discord server".
 
 This privacy policy lays out
