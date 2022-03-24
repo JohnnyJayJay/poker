@@ -160,7 +160,7 @@
                 :community-cards []
                 :pots            [{:participants players
                                    :money        0
-                                   :name         "Main pot"}]
+                                   :name         0}]
                 :players         players
                 :player-cards    (zipmap players (partition 2 player-cards))
                 :round-bets      (zipmap players (repeat 0))

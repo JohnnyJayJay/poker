@@ -31,7 +31,7 @@
   [{:keys [round-bets pots] :as game}]
   (update game :pots conj {:money        0
                            :participants (set (keys round-bets))
-                           :name         (str (count pots) ". Side pot")}))
+                           :name         (count pots)}))
 
 (defn flush-bets
   "Flushes all round bets by distributing among old and new pots as required by the poker rules.

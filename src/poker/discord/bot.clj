@@ -1,220 +1,177 @@
 (ns poker.discord.bot
-  (:require [poker.logic.game :as poker]
-            [poker.logic.core :as cards]
-            [poker.discord.display :as disp]
-            [poker.discord.command :as cmd]
-            [discljord.connections :as conns]
-            [discljord.messaging :as msgs]
-            [discljord.events :as events]
-            [discljord.formatting :refer [mention-user strike-through]]
-            [discljord.permissions :as perms]
-            [discljord.events.state :refer [prepare-guild]]
-            [discljord.util :refer [parse-if-str]]
-            [clojure.core.async :as async]
-            [clojure.string :as strings]
-            [clojure.set :as sets]
-            [clojure.edn :as edn]))
+  (:require [poker.discord.state :refer [active-games waiting-games event-ch rest-conn ws-conn config event-pool]]
+            [poker.discord.waiting :as waiting]
+            [poker.discord.i18n :as i18n]
+            [poker.discord.util :refer [respond-interaction]]
+            [poker.discord.component :refer [handle-component-interaction]]
+            [poker.discord.playing :refer [handle-raise-submit]]
+            [mount.core :as mount]
+            [discljord.connections :as dc]
+            [discljord.formatting :as dfmt]
+            [discljord.messaging :as dr]
+            [discljord.permissions :as dp]
+            [discljord.events :as devents]
+            [discljord.events.state :as ds]
+            [slash.command :refer [defhandler paths group]]
+            [slash.gateway :as slash-ws]
+            [slash.core :as slash]
+            [slash.response :as rsp]
+            [slash.component.structure :as cmp]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [clojure.core.async :refer [chan go <!]])
+  (:gen-class))
 
-(defonce connection-ch (atom nil))
-(defonce message-ch (atom nil))
-(defonce config (atom nil))
-
-(defonce active-games (atom {}))
-(defonce waiting-channels (atom {}))
-
-(defn calculate-budgets [players buy-in previous-budgets]
-  (zipmap (sets/difference (set players) (set (keys previous-budgets))) (repeat buy-in)))
-
-(defn in-game? [user-id]
-  (some #(contains? % user-id) (map :players (vals @active-games))))
-
-(defn send-message! [channel-id content]
-  (msgs/create-message! @message-ch channel-id :content content))
-
-(defn game-loop! [game timeout]
-  (async/go-loop [{:keys [state channel-id move-channel] :as game} game]
-    (swap! active-games assoc channel-id game)
-    (send-message! channel-id (disp/game-state-message game))
-    (if (poker/end? game)
-      (do
-        (send-message! channel-id ((case state :instant-win disp/instant-win-message :showdown disp/showdown-message) game))
-        (swap! active-games dissoc channel-id)
-        game)
-      (do
-        (send-message! channel-id (disp/turn-message game))
-        (async/alt!
-          (async/timeout timeout) (do
-                                    (send-message! channel-id (disp/timed-out-message game))
-                                    (recur (poker/fold game)))
-          move-channel ([{:keys [action amount]}]
-                        (recur (case action
-                                 (:check :call) (poker/call game)
-                                 :all-in (poker/all-in game)
-                                 :fold (poker/fold game)
-                                 :raise (poker/raise game amount)))))))))
-
-(defn has-permissions [channel-id]
-  (async/go
-    (let [{:keys [guild-id] :as channel} (async/<! (msgs/get-channel! @message-ch channel-id))
-          {:keys [id]} (async/<! (msgs/get-current-user! @message-ch))
-          member (async/<! (msgs/get-guild-member! @message-ch guild-id id))
-          guild (-> (async/<! (msgs/get-guild! @message-ch guild-id))
-                    (assoc :channels [(update channel :permission-overwrites
-                                              (fn [overrides]
-                                                (mapv #(-> % (update :allow parse-if-str)
-                                                           (update :deny parse-if-str))
-                                                      overrides)))])
-                    (assoc :members [member])
-                    (update :roles (fn [roles] (mapv #(update % :permissions parse-if-str) roles)))
-                    (prepare-guild))]
-      (perms/has-permissions?
-        #{:send-messages :read-message-history :add-reactions :use-external-emojis}
-        guild id channel-id))))
-
-
-(defn gather-players! [channel-id message-id start-now abort wait-time]
-  (run! (partial msgs/create-reaction! @message-ch channel-id message-id)
-       [disp/handshake-emoji disp/fast-forward-emoji disp/x-emoji])
-  (async/go
-    (let [timeout (async/timeout wait-time)
-          [_ ch] (async/alts! [abort start-now timeout])]
-      (if (= ch abort)
-        :aborted
-        (if (async/<! (has-permissions channel-id))
-          (->> (async/<! (msgs/get-reactions! @message-ch channel-id message-id disp/handshake-emoji :limit 20))
-               (remove :bot)
-               (map :id)
-               (remove in-game?))
-          :no-perms)))))
-
-(defn notify-players! [{:keys [players] :as game}]
-  (async/go
-    (doseq [player players
-            :let [{dm-id :id} (async/<! (msgs/create-dm! @message-ch player))]]
-      (send-message! dm-id (disp/player-notification-message game player)))))
-
-(defn remove-bust-outs [game]
-  (update game :budgets #(into {} (filter (comp pos? second) %))))
-
-(defmulti handle-event (fn [type _] type))
-
-(defn start-game! [channel-id initiator buy-in wait-time timeout start-message start-fn]
-  (async/go
-    (let [{join-message-id :id} (async/<! (send-message! channel-id start-message))
-          start-now (async/chan)
-          abort (async/chan)]
-      (swap! waiting-channels assoc channel-id
-             {:msg join-message-id :initiator initiator :start-now-ch start-now :abort-ch abort})
-      (let [players (async/<! (gather-players! channel-id join-message-id start-now abort wait-time))
-            edit-msg (fn [additional-content]
-                       (msgs/edit-message! @message-ch channel-id join-message-id
-                                           :content (str (strike-through start-message)
-                                                         \newline additional-content)))]
-        (swap! waiting-channels dissoc channel-id)
+(defn validate-opts [defaults opts]
+  (let [{:keys [big-blind small-blind buy-in] :as opts} (-> (merge defaults opts) (update :wait-time * 1000) (update :timeout * 1000))
+        {:keys [big-blind small-blind] :as updated-opts}
         (cond
-          (= players :aborted) (edit-msg "The game was aborted.")
-          (= players :no-perms) (edit-msg (str "The bot is lacking permissions. Make sure it can read the message history of this channel."))
-          (<= (count players) 1) (edit-msg "Not enough players.")
-          :else (let [game (assoc (start-fn players) :channel-id channel-id :move-channel (async/chan))]
-                  (notify-players! game)
-                  (send-message! channel-id (disp/blinds-message game))
-                  (let [{:keys [budgets winners pots] :as result} (-> game (game-loop! timeout) async/<! remove-bust-outs)
-                        winners (or winners (mapcat :winners pots))
-                        new-initiator (if (contains? budgets initiator) ; If the previous initiator has bust out, pick the winner with the highest budget for the next game
-                                        initiator
-                                        (reduce (partial max-key budgets) winners))]
-                    (start-game!
-                      channel-id
-                      new-initiator
-                      buy-in
-                      wait-time
-                      timeout
-                      (disp/restart-game-message new-initiator result wait-time buy-in)
-                      #(poker/restart-game result % (shuffle cards/deck) (calculate-budgets % buy-in budgets))))))))))
+          (and (nil? big-blind) (nil? small-blind))
+          (assoc opts :big-blind (quot buy-in 20) :small-blind (quot buy-in 50))
 
-(defmethod handle-event :message-reaction-add
-  [_ {:keys [channel-id user-id message-id] {emoji :name} :emoji :as data}]
-  (if-let [{:keys [initiator abort-ch start-now-ch msg]} (@waiting-channels channel-id)]
-    (when (and (= msg message-id) (= initiator user-id))
-      (condp = emoji
-        disp/fast-forward-emoji (async/close! start-now-ch)
-        disp/x-emoji (async/close! abort-ch)
-        nil))))
+          (nil? big-blind)
+          (assoc opts :big-blind (* small-blind 2))
 
-(defn try-parse-int [str]
+          (nil? small-blind)
+          (assoc opts :small-blind (quot big-blind 2))
+
+          :else opts)]
+    (cond
+      (> small-blind big-blind)
+      :command.game.error/blinds-proportion
+
+      (<= buy-in (max small-blind big-blind))
+      :command.game.error/blinds-buy-in
+
+      :else updated-opts)))
+
+;; TODO use caching instead
+(defn has-permissions? [channel-id]
+  (go
+    (if-let [{:keys [guild-id] :as channel} (<! (dr/get-channel! rest-conn channel-id))]
+      (let [{:keys [id]} (<! (dr/get-current-user! rest-conn))
+            member (<! (dr/get-guild-member! rest-conn guild-id id))
+            guild (-> (<! (dr/get-guild! rest-conn guild-id))
+                      (assoc :members [member])
+                      (assoc :channels [channel])
+                      (ds/prepare-guild))]
+        (dp/has-permissions?
+         #{:send-messages :use-external-emojis}
+         guild id channel-id))
+      false)))
+
+(defhandler holdem-handler ["holdem"]
+  {:keys [id token channel-id guild-id] {{user-id :id} :user} :member :as _interaction}
+  opts
+  (condp contains? channel-id ;; FIXME put in transaction
+    ;; Is there already an active game in this channel?
+    @active-games (->> (rsp/channel-message {:content (i18n/loc-msg guild-id :command.game/active-game)})
+                       rsp/ephemeral
+                       (respond-interaction id token))
+    ;; Is there already a waiting game in this channel?
+    @waiting-games (->> (rsp/channel-message {:content (i18n/loc-msg guild-id :command.game/waiting-game)})
+                        rsp/ephemeral
+                        (respond-interaction id token))
+    ;; else
+    (let [validated-opts (validate-opts (:defaults config) opts)]
+      (if (keyword? validated-opts)
+        (->> {:content (i18n/loc-msg guild-id validated-opts)}
+             rsp/channel-message
+             rsp/ephemeral
+             (respond-interaction id token))
+        (go
+          (if (<! (has-permissions? channel-id))
+            (waiting/init-game! id token validated-opts guild-id channel-id user-id)
+            (->> {:content (i18n/loc-msg guild-id :bot/missing-permissions)}
+                 rsp/channel-message
+                 (respond-interaction id token))))))))
+
+
+(defhandler info-handler ["info"]
+  {:keys [id token guild-id] :as _interaction}
+  _
+  (let [bundle (i18n/guild-bundle guild-id)]
+    (->> {:content (i18n/loc-msg bundle :command.info/message)
+          :components [(cmp/action-row
+                        (cmp/link-button
+                         (:invite-url config)
+                         :label (i18n/loc-msg bundle :command.info/add)
+                         :emoji {:name "🃏"})
+                        (cmp/link-button
+                         (:source-url config)
+                         :label (i18n/loc-msg bundle :command.info/source)
+                         :emoji {:name "🛠"})
+                        (cmp/link-button
+                         (:server-url config)
+                         :label (i18n/loc-msg bundle :command.info/server)
+                         :emoji {:name "❓"})
+                        (cmp/link-button
+                         (:support-url config)
+                         :label (i18n/loc-msg bundle :command.info/support)
+                         :emoji {:name "💸"}))]}
+         rsp/channel-message
+         rsp/ephemeral
+         (respond-interaction id token))))
+
+(def language-select-components
+  [(cmp/action-row
+    (cmp/select-menu
+     "language-select"
+     [(cmp/select-option "English" "en" :emoji {:name "🇬🇧"})]))])
+
+(defhandler language-handler ["language"]
+  {:keys [id token guild-id] {:keys [permissions]} :member}
+  _
+  (->> (if (dp/has-permission-flag? :manage-guild permissions)
+         {:content (i18n/loc-msg guild-id :command.language/select) :components language-select-components}
+         {:content (i18n/loc-msg guild-id :command.language/no-perms)})
+       rsp/channel-message
+       rsp/ephemeral
+       (respond-interaction id token)))
+
+(defmethod handle-component-interaction "language-select"
+  [{:keys [id token guild-id] {[lang] :values} :data}]
+  ;; TODO actually update - guild settings are atom that is dumped periodically to a file
+  (->> {:content (i18n/loc-msg guild-id :command.language/updated)
+        :components []}
+       rsp/update-message
+       (respond-interaction id token)))
+
+(defn handle-message-command
+  [_ {:keys [content id channel-id guild-id]}]
+  (when (str/starts-with? content "holdem!")
+    (dr/create-message!
+      rest-conn
+      channel-id
+      :content (i18n/loc-msg guild-id :command.holdem/deprecation-notice)
+      :components
+      [(cmp/action-row
+        (cmp/link-button (:invite-url config)
+                         :label (i18n/loc-msg guild-id :command.holdem/commands-button)
+                         :emoji {:name "🤖"}))]
+      :message-reference {:message_id id :guild_id guild-id :channel_id channel-id})))
+
+(defn handle-ready [_ {[shard-id] :shard :as _ready-event}]
+  (dc/status-update!
+   ws-conn
+   :activity (dc/create-activity :name "/holdem" :type :music)
+   :shards #{shard-id}))
+
+(def interaction-handlers
+  (assoc slash-ws/gateway-defaults
+         :application-command (paths #'holdem-handler (group ["poker"] #'info-handler #'language-handler))
+         :message-component #'handle-component-interaction
+         :modal-submit #'handle-raise-submit))
+
+(def event-handlers
+  {:interaction-create [#(slash/route-interaction interaction-handlers %2)]
+   :message-create [#'handle-message-command]
+   :ready [#'handle-ready]})
+
+(defn -main [& _args]
+  (log/info "Starting bot")
+  (mount/start)
+  (log/info "Logged in as" (dfmt/user-tag @(dr/get-current-user! rest-conn)))
   (try
-    (Integer/parseInt str)
-    (catch NumberFormatException _ nil)))
-
-(defmulti
-  handle-command
-  (fn [command _ _ _]
-    (strings/lower-case command)))
-
-(defn valid-move [{[current] :cycle :as game} user-id command]
-  (and (= current user-id) (some #(and (= command (name (:action %))) %) (poker/possible-moves game))))
-
-; TODO better and more specific solution for move commands
-
-(doseq [move-cmd ["fold" "check" "call" "all-in"]]
-  (defmethod handle-command move-cmd [_ _ user-id channel-id]
-    (let [{:keys [move-channel] :as game} (get @active-games channel-id)]
-      (when-let [move (valid-move game user-id move-cmd)]
-        (async/>!! move-channel move)))))
-
-(defmethod handle-command "raise" [_ args user-id channel-id]
-  (let [{:keys [move-channel] :as game} (get @active-games channel-id)]
-    (when-let [move (valid-move game user-id "raise")]
-      (if-let [amount (try-parse-int (get args 0))]
-        (if (<= (poker/minimum-raise game) amount (poker/possible-bet game))
-          (async/>!! move-channel (assoc move :amount amount))
-          (send-message! channel-id (disp/invalid-raise-message game)))
-        (send-message! channel-id (disp/invalid-raise-message game))))))
-
-(defmethod handle-command "holdem!" [_ args user-id channel-id]
-  (cond
-    (contains? @active-games channel-id) (send-message! channel-id (disp/channel-occupied-message channel-id user-id))
-    (contains? @waiting-channels channel-id) (send-message! channel-id (disp/channel-waiting-message channel-id user-id))
-    (in-game? user-id) (send-message! channel-id (disp/already-ingame-message user-id))
-    :else (let [{{:keys [buy-in big-blind small-blind wait-time timeout]} :options :keys [errors]} (cmd/parse-command args @config)]
-            (if errors
-              (send-message! channel-id (str "Invalid command!\n\n- " (strings/join "\n- " errors)))
-              (start-game!
-                channel-id user-id buy-in wait-time timeout
-                (disp/new-game-message user-id wait-time buy-in)
-                #(poker/start-new-game big-blind small-blind % (shuffle cards/deck) (calculate-budgets % buy-in {})))))))
-
-(defmethod handle-event :default [_ _])
-
-(defmethod handle-command :default [_ _ _ _])
-
-(defmethod handle-event :message-create
-  [_ {{author-id :id bot? :bot} :author :keys [channel-id content]}]
-  (if-not bot?
-    (let [split (strings/split content #"\s+")]
-      (handle-command (first split) (subvec split 1) author-id channel-id))))
-
-(defn def-ping-commands [bot-id]
-  (let [mention (mention-user bot-id)]
-    (doseq [command [mention (strings/replace mention "@" "@!")]]
-      (defmethod handle-command command [_ _ user-id channel-id]
-        (send-message! channel-id (disp/info-message @config user-id))))))
-
-(defmethod handle-event :ready [_ _]
-  (let [{bot-id :id bot-name :username} @(msgs/get-current-user! @message-ch)]
-    (def-ping-commands bot-id)
-    (conns/status-update! @connection-ch :activity (conns/create-activity :type :music :name (str \@ bot-name)))))
-
-(defn- start-bot! [{:keys [token] :as config}]
-  (reset! poker.discord.bot/config config)
-  (let [event-ch (async/chan 10000)
-        connection-ch (conns/connect-bot! token event-ch :intents #{:guild-messages :guild-message-reactions})
-        message-ch (msgs/start-connection! token)]
-    (reset! poker.discord.bot/connection-ch connection-ch)
-    (reset! poker.discord.bot/message-ch message-ch)
-    (events/message-pump! event-ch handle-event)
-    (msgs/stop-connection! message-ch)
-    (conns/disconnect-bot! connection-ch)))
-
-(defn -main [& args]
-  (start-bot! (edn/read-string (slurp "./config.clj"))))
+    (devents/message-pump! event-ch #(.execute event-pool (fn [] (devents/dispatch-handlers event-handlers %1 %2))))
+    (finally (mount/stop))))

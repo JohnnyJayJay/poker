@@ -1,0 +1,93 @@
+{:bot/general-error "❌ Something went wrong. Please try again.",
+ :bot/missing-permissions "It seems like I don''t have all the permissions that I need. I need to be able to *send messages* and *use external emojis*."
+
+ :term/community-cards "Community cards",
+ :term/chip-amount "{0, choice, 0#no chips|1#1 chip|1<{0, number, integer} chips}",
+ :term/main-pot "Main pot",
+ :term/side-pot "{0, number, integer}. side pot"
+
+ :hand/highcard "Highcard",
+ :hand/pair "Pair",
+ :hand/two-pairs "Two pairs",
+ :hand/three-of-a-kind "Three of a kind",
+ :hand/straight "Straight",
+ :hand/flush "Flush",
+ :hand/full-house "Full house",
+ :hand/four-of-a-kind "Four of a kind",
+ :hand/straight-flush "Straight flush",
+ :hand/royal-flush "Royal flush",
+
+ :command.holdem/deprecation-notice "Poker got an upgrade! Because of this, you are no longer able to use the old, ugly `holdem!` command.
+**Games are now started using `/holdem`**.
+**If this doesn''t work for you**, the bot most likely lacks authorisation. Go ahead and fix that by clicking the button below (**only server admins can do this!**), and then reload Discord (Ctrl + R).",
+ :command.holdem/commands-button "Enable Slash Commands"
+
+ :command.game/active-game "There already is an active game in this channel. Use a different channel or thread to start a new game.",
+ :command.game/waiting-game "There already is a waiting game in this channel. Either join that or use a different channel or thread to start another game.",
+ :command.game/arg-error "There''s something wrong with your arguments:",
+ :command.game.error/blinds-proportion "❌ Small blind must be less than big blind.",
+ :command.game.error/blinds-buy-in "❌ Small and big blind must be less than buy-in.",
+
+ :command.info/message "Hi there! I''m a free and open source bot that lets you and your friends play Poker against each other in Discord. Just run `/holdem` to get started!",
+ :command.info/add "Add me to your server",
+ :command.info/source "View my source code",
+ :command.info/server "Join my support server",
+ :command.info/support "Support me"
+
+ :command.language/select "Select your language",
+ :command.language/updated "✅ Language settings updated!",
+ :command.language/no-perms "Only server managers are allowed to change the language!"
+
+ :waiting/new-game "{0} wants to play a game of Poker! Everybody will start with {1, number, integer} chips.",
+ :waiting/existing-game "This round of the game is over, but you can keep playing!
+Players of the last round, you now have:
+{0}
+
+You will enter the next round with this if you continue playing.",
+
+ :waiting/open-game "This game is also open to new players! They will start with {0, number, integer} chips."
+ :waiting/msg "{1, choice, 0#No more players can join.|1#One more player can join!|1<{1, number, integer} more players can join!}
+Current players: {2}
+
+{0} is the host of the game and can abort or start it immediately.
+Otherwise, the game will start {3}.",
+ :waiting/join "Join",
+ :waiting/leave "Leave",
+ :waiting/abort "Abort",
+ :waiting/start "Start now",
+ :waiting/not-host "You can''t do that because you aren''t the host of the game.",
+ :waiting/aborted "The game was aborted.",
+ :waiting/not-enough-players "Not enough players.",
+ :waiting/full "The game is full. You cannot join until someone else leaves.",
+ :waiting/no-new-players "This game is not open to new players",
+ :waiting/already-joined "You already joined this game!",
+ :waiting/didnt-join "You haven''t joined this game!"
+
+ :playing/small-blind "{0} places the small blind of **{1, choice, 1#one chip|1<{1, number, integer} chips**}.",
+ :playing/big-blind "{0} places the big blind of **{1, number, integer} chips**.",
+ :playing/turn "It''s your turn, {0}!\nWhat would you like to do? You still have {1, choice, 1#**one chip**|1<{1, number, integer} chips}.",
+ :playing/not-your-turn "It''s not your turn.",
+ :playing/not-a-player "You''re not part of this game!",
+ :playing.move/fold "Fold",
+ :playing.move/check "Check",
+ :playing.move/call "Call",
+ :playing.move/raise "Raise",
+ :playing.move/all-in "All-in",
+ :playing.move.raise/min "min.",
+ :playing.move.raise/amount "Raise amount",
+ :playing.move.raise/constraints "An amount between {0, number, integer} and {1, number, integer}",
+ :playing.move.raise/invalid-amount "Invalid raise amount.",
+ :playing.move.raise/passed "Your time to raise has passed.",
+ :playing/view-cards "View hole cards",
+
+ :playing.move.done/fold "{0} folds.",
+ :playing.move.done/check "{0} checks.",
+ :playing.move.done/call "{0} calls {1, number, integer}.",
+ :playing.move.done/raise "{0} raises by {1, number, integer}.",
+ :playing.move.done/all-in "{0} goes all-in!",
+ :playing/auto-fold "{0} did not respond in time and therefore folds automatically.",
+ :playing/instant-win "Everybody except {0} has folded!\nThey win the main pot of {1, choice, 1#1 chip|1<{1, number, integer} chips}.",
+ :playing/split "{0} split the {1} for **{2, choice, 0#no... chips... each? :frowning:|1#one chip each|1<{2, number, integer} chips each}**!",
+ :playing/single "{0} wins the {1} and gets **{2, choice, 1#one chip|1<{2, number, integer} chips}**!",
+ :playing/showdown "**Showdown!** Let''s have a look at the hands...",
+ :playing/conclusion "This means that:"}
