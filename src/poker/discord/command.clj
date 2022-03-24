@@ -11,7 +11,7 @@
     (cmd/option "big-blind" "The value of the big blind" :integer :min-value 2 :max-value 1000000)
     (cmd/option "wait-time" "How many seconds do players have to join?" :integer :min-value 1 :max-value 600)
     (cmd/option "timeout" "How many seconds do players have to make a move?" :integer :min-value 1 :max-value 600)
-    (cmd/option "max-players" "The maximum number of players that can participate" :integer :min-value 2 :max-value 10)
+    (cmd/option "max-players" "The maximum number of players that can participate" :integer :min-value 2 :max-value 12)
     (cmd/option "closed" "If set to true, no new players can join after the first round" :boolean)]))
 
 (def poker-command

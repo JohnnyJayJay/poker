@@ -120,7 +120,7 @@
            (str (dfmt/mention-user player-id) " - " (i18n/loc-msg bundle name) "\n"
                 (cards->str (concat cards (player-cards player-id)) 5))))
         (partition-all 4)
-        (str/join "\n"))
+        (map (partial str/join "\n")))
    [(wins->str bundle pots)]))
 
 (defn timed-out-message [bundle {[current] :cycle}]
