@@ -151,7 +151,7 @@
           start-ch (chan)
           {:keys [budgets pots] :as game} (remove-bust-outs game)
           waiting-game {:host (if (contains? budgets host-id) host-id (reduce (partial max-key budgets) (mapcat :winners pots)))
-                        :participants (vec (sort-by budgets (keys budgets)))
+                        :participants []
                         :opts opts
                         :start-timestamp (+ (System/currentTimeMillis) wait-time)
                         :guild-id guild-id
