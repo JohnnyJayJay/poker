@@ -50,6 +50,7 @@
         :primary "all-in"
         :label (str (i18n/loc-msg bundle :playing.move/all-in) " (" (:all-in move-map) ")")))]}))
 
+
 (defmethod handle-component-interaction "view"
   [{:keys [id token channel-id guild-id] {{user-id :id} :user} :member}]
   (when-let [{{cards user-id} :player-cards :as _game} (@active-games channel-id)]
@@ -159,6 +160,18 @@
 (defn calculate-budgets [players buy-in previous-budgets]
   (zipmap (set/difference (set players) (set (keys previous-budgets))) (repeat buy-in)))
 
+
+(defn notify-players!
+  [guild-bundle {:keys [player-cards channel-id] :as _game}]
+  (doseq [[user-id cards] player-cards]
+    (go
+      (let [{dm-id :id} (<! (dr/create-dm! rest-conn user-id))]
+        (dr/create-message!
+         rest-conn dm-id
+         :content (str (i18n/loc-msg guild-bundle :playing/notification (dfmt/mention-channel channel-id))
+                       \newline
+                       (disp/cards->str cards)))))))
+
 (defn start-game!
   [{:keys [prev-round guild-id participants channel-id] {:keys [buy-in small-blind big-blind]} :opts :as waiting-game} timeout]
   (let [budgets (calculate-budgets participants buy-in (:budgets prev-round {}))
@@ -169,6 +182,7 @@
                  (assoc :channel-id channel-id :move-chan (a/chan)))
         guild-bundle (i18n/guild-bundle guild-id)]
     (swap! active-games assoc channel-id game)
+    (notify-players! guild-bundle game)
     (dr/create-message! rest-conn channel-id
                         :content
                         (str (i18n/loc-msg guild-bundle :playing/small-blind (dfmt/mention-user (:small-blind game)) small-blind) \newline

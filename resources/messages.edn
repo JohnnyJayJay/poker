@@ -63,6 +63,7 @@ Otherwise, the game will start {3}.",
  :waiting/already-joined "You already joined this game!",
  :waiting/didnt-join "You haven''t joined this game!"
 
+ :playing/notification "Here are your cards for the game in {0}:",
  :playing/small-blind "{0} places the small blind of **{1, choice, 1#one chip|1<{1, number, integer} chips**}.",
  :playing/big-blind "{0} places the big blind of **{1, number, integer} chips**.",
  :playing/turn "It''s your turn, {0}!\nWhat would you like to do? You still have {1, choice, 1#**one chip**|1<{1, number, integer} chips}.",
