@@ -48,17 +48,26 @@
 ;; TODO use caching instead
 (defn has-permissions? [channel-id]
   (go
-    (if-let [{:keys [guild-id] :as channel} (<! (dr/get-channel! rest-conn channel-id))]
-      (let [{:keys [id]} (<! (dr/get-current-user! rest-conn))
-            member (<! (dr/get-guild-member! rest-conn guild-id id))
-            guild (-> (<! (dr/get-guild! rest-conn guild-id))
-                      (assoc :members [member])
-                      (assoc :channels [channel])
-                      (ds/prepare-guild))]
-        (dp/has-permissions?
-         #{:send-messages :use-external-emojis}
-         guild id channel-id))
-      false)))
+    (let [{:keys [parent-id guild-id type] :as channel} (<! (dr/get-channel! rest-conn channel-id))]
+      (case type
+        ;; for threads, check the parent channel permissions and join the thread
+        11 (do
+             (dr/join-thread! rest-conn channel-id)
+             (<! (has-permissions? parent-id)))
+
+        ;; for regular text channels, check the permissions
+        0 (let [{:keys [id]} (<! (dr/get-current-user! rest-conn))
+              member (<! (dr/get-guild-member! rest-conn guild-id id))
+              guild (-> (<! (dr/get-guild! rest-conn guild-id))
+                        (assoc :members [member])
+                        (assoc :channels [channel])
+                        (ds/prepare-guild))]
+          (dp/has-permissions?
+           #{:send-messages :use-external-emojis}
+           guild id channel-id))
+
+        ;; for all other types of channels, deny
+        false))))
 
 (defhandler holdem-handler ["holdem"]
   {:keys [id token channel-id guild-id] {{user-id :id} :user} :member :as _interaction}
