@@ -15,6 +15,8 @@
                  [mount "0.1.16"]
                  [datalevin "0.6.8"]]
   :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"
-             "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]
+             "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+             "--add-opens=java.base/java.nio=ALL-UNNAMED"
+             "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"]
   :main poker.discord.bot
   :repl-options {:init-ns poker.logic.game})

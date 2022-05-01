@@ -38,5 +38,5 @@
   :stop (.shutdown event-pool))
 
 (defstate db-conn
-  :start (doto (datalevin/open-kv "") (datalevin/open-dbi "language"))
+  :start (doto (datalevin/open-kv "data") (datalevin/open-dbi "language"))
   :stop (datalevin/close-kv db-conn))
