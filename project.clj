@@ -12,7 +12,8 @@
                  [org.apache.logging.log4j/log4j-api "2.17.1"]
                  [com.github.johnnyjayjay/slash "0.5.0-SNAPSHOT"]
                  [com.github.johnnyjayjay/edn-bundle "0.1.1-SNAPSHOT"]
-                 [mount "0.1.16"]]
+                 [mount "0.1.16"]
+                 [datalevin "0.6.8"]]
   :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"
              "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]
   :main poker.discord.bot

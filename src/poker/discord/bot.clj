@@ -140,7 +140,7 @@
 
 (defmethod handle-component-interaction "language-select"
   [{:keys [id token guild-id] {[lang] :values} :data}]
-  ;; TODO actually update - guild settings are atom that is dumped periodically to a file
+  (i18n/set-guild-locale! guild-id lang)
   (->> {:content (i18n/loc-msg guild-id :command.language/updated)
         :components []}
        rsp/update-message

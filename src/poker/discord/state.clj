@@ -3,7 +3,8 @@
             [clojure.edn :as edn]
             [clojure.core.async :as async]
             [discljord.messaging :as dr]
-            [discljord.connections :as dg])
+            [discljord.connections :as dg]
+            [datalevin.core :as datalevin])
   (:import (java.util.concurrent Executors ExecutorService)))
 
 (defstate config
@@ -35,3 +36,7 @@
 (defstate ^ExecutorService event-pool
   :start (Executors/newFixedThreadPool 4)
   :stop (.shutdown event-pool))
+
+(defstate db-conn
+  :start (doto (datalevin/open-kv "") (datalevin/open-dbi "language"))
+  :stop (datalevin/close-kv db-conn))

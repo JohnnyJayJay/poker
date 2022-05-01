@@ -1,6 +1,8 @@
 (ns poker.discord.i18n
   (:require [edn-bundle.core :as bnd]
-            [edn-bundle.format :as fmt])
+            [edn-bundle.format :as fmt]
+            [poker.discord.state :refer [db-conn]]
+            [datalevin.core :as d])
   (:import (java.util Locale)))
 
 (def resource-bundle-name "messages")
@@ -8,7 +10,12 @@
 (defn guild-locale
   "Retrieves the locale set for a guild."
   [guild-id]
-  Locale/ENGLISH)
+  (Locale/forLanguageTag (or (d/get-value db-conn "language" guild-id) "en")))
+
+(defn set-guild-locale!
+  "Sets the locale to be used for a guild"
+  [guild-id ^String locale]
+  (d/transact-kv db-conn [[:put "language" guild-id locale]]))
 
 (defn guild-bundle
   "Retrieves the resource bundle for a guild"
