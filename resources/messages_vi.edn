@@ -1,0 +1,94 @@
+{:bot/general-error "❌ Đã có lỗi xảy ra. Vui lòng thử lại.",
+ :bot/missing-permissions "Bot chưa được cung cấp quyền hợp lệ. Bot cần có quyền để có thể *gửi tin nhắn* và *sử dụng emoji nội bộ*."
+
+ :term/community-cards "Bài trên bàn",
+ :term/chip-amount "{0, choice, 0#no chips|1#1 chip|1<{0, number, integer} chips}",
+ :term/main-pot "Main pot",
+ :term/side-pot "{0, number, integer}. side pot"
+
+ :hand/highcard "Bài cao",
+ :hand/pair "Một đôi",
+ :hand/two-pairs "Hai đôi",
+ :hand/three-of-a-kind "Bộ ba lá",
+ :hand/straight "Sảnh",
+ :hand/flush "Thùng",
+ :hand/full-house "Cù lũ",
+ :hand/four-of-a-kind "Tứ quý",
+ :hand/straight-flush "Thùng phá sảnh",
+ :hand/royal-flush "Thùng phá sảnh hoàng kim",
+
+ :command.holdem/deprecation-notice "Poker đã có phiên bản mới! Hãy cập nhật ngay để sử dụng những tính năng mới nhất.
+**Game được bắt đầu bằng cách sử dụng lệnh `/holdem`**.
+**Nếu không hoạt động**, có thể bot chưa được cung cấp quyền. Hãy click nút bên dưới (**chỉ admin server mới có thể sử dụng!**), sau đó hãy load lại trang Discord (Ctrl + R).",
+ :command.holdem/commands-button "Kích hoạt Slash Commands"
+
+ :command.game/active-game "Hiện tại có game đang chạy trong kênh này. Vui lòng sử dụng kênh khác để bắt đầu game mới.",
+ :command.game/waiting-game "Hiện tại có game đang chờ trong kênh này. Tham gia ngay hoặc sử dụng kênh khác để tạo game mới.",
+ :command.game/arg-error "Đã có lỗi xảy ra với cú pháp của bạn:",
+ :command.game.error/blinds-proportion "❌ Small blind phải nhỏ hơn big blind.",
+ :command.game.error/blinds-buy-in "❌ Small blind và big blind phải ít hơn buy-in(tiền mua vào).",
+
+ :command.info/message "Xin chào! Đây là bot miễn phí với mã nguồn mở để mọi người có thể chơi Poker cùng nhau trên Discord. Hãy nhập `/holdem` để bắt đầu!",
+ :command.info/add "Thêm bot vào server",
+ :command.info/source "Xem mã nguồn bot",
+ :command.info/server "Tham gia server hỗ trợ",
+ :command.info/support "Hỗ trợ tôi"
+
+ :command.language/select "Chọn ngôn ngữ của bạn",
+ :command.language/updated "✅ Đã cập nhật ngôn ngữ!",
+ :command.language/no-perms "Chỉ có người quản lý server mới có thể đổi ngôn ngữ!"
+
+ :waiting/new-game "{0} muốn chơi game Poker! Mọi người sẽ bắt đầu với {1, number, integer} chips.",
+ :waiting/existing-game "Đã kết thúc vòng game, nhưng bạn có thể tiếp tục chơi!
+Người chơi ở vòng trước, bao gồm:
+{0}
+
+Bạn sẽ tham gia vào vòng tiếp theo tại đây nếu tiếp tục chơi.",
+
+ :waiting/open-game "Game cũng đang mở cho những người mới! Họ sẽ bắt đầu với {0, number, integer} chips."
+ :waiting/msg "{1, choice, 0#Không ai được tham gia nữa.|1#Một người chơi nữa có thể tham gia!|1<{1, number, integer} người chơi nữa có thể tham gia!}
+Người chơi hiện tại: {2}
+
+{0} là chủ phòng và có thể hủy bỏ hoặc bắt đầu game ngay.
+Nếu không, game sẽ bắt đầu {3}.",
+ :waiting/join "Vào game",
+ :waiting/leave "Rời game",
+ :waiting/abort "Hủy bỏ",
+ :waiting/start "Bắt đầu",
+ :waiting/not-host "Bạn không thể thực hiện điều này vì bạn không phải chủ phòng.",
+ :waiting/aborted "Game đã bị hủy bỏ.",
+ :waiting/not-enough-players "Không đủ số lượng người chơi.",
+ :waiting/full "Game đã đầy. Bạn không thể tham gia cho đến khi có ai đó rời game.",
+ :waiting/no-new-players "Game này không mở cho những người mới",
+ :waiting/already-joined "Bạn đã tham gia vào game rồi!",
+ :waiting/didnt-join "Bạn chưa tham gia vào game!"
+
+ :playing/notification "Đây là bài của bạn trong {0}:",
+ :playing/small-blind "{0} đặt vào small blind **{1, choice, 1#one chip|1<{1, number, integer} chips**}.",
+ :playing/big-blind "{0} đặt vào big blind **{1, number, integer} chips**.",
+ :playing/turn "Đã tới lượt của bạn, {0}!\nBạn muốn làm gì? Hiện tại bạn có {1, choice, 1#**one chip**|1<{1, number, integer} chips}.",
+ :playing/not-your-turn "Không phải lượt của bạn.",
+ :playing/not-a-player "Bạn không ở trong game này!",
+ :playing.move/fold "Bỏ bài",
+ :playing.move/check "Check",
+ :playing.move/call "Call",
+ :playing.move/raise "Raise",
+ :playing.move/all-in "All-in",
+ :playing.move.raise/min "tối thiểu.",
+ :playing.move.raise/amount "Raise số lượng",
+ :playing.move.raise/constraints "Số lượng nằm trong khoảng {0, number, integer} đến {1, number, integer}",
+ :playing.move.raise/invalid-amount "Số lượng raise không hợp lệ.",
+ :playing.move.raise/passed "Thời gian raise của bạn đã hết.",
+ :playing/view-cards "Xem bài",
+
+ :playing.move.done/fold "{0} bỏ bài.",
+ :playing.move.done/check "{0} checks.",
+ :playing.move.done/call "{0} calls số lượng {1, number, integer}.",
+ :playing.move.done/raise "{0} raises số lượng {1, number, integer}.",
+ :playing.move.done/all-in "{0} đã all-in!",
+ :playing/auto-fold "{0} đã không thực hiện đúng giờ nên tự động bỏ bài.",
+ :playing/instant-win "Tất cả mọi người đã bỏ bài ngoại trừ {0}!\nĐã chiến thắng main pot số lượng {1, choice, 1#1 chip|1<{1, number, integer} chips}.",
+ :playing/split "{0} chia {1} với số lượng **{2, choice, 0#no... chips... mỗi người? :frowning:|1#one chip mỗi người|1<{2, number, integer} chips mỗi người}**!",
+ :playing/single "{0} chiến thắng {1} và ăn **{2, choice, 1#one chip|1<{2, number, integer} chips}**!",
+ :playing/showdown "**Cuộc tranh đấu!** Hãy cùng xem bài trên tay...",
+ :playing/conclusion "Điều này có nghĩa là:"}

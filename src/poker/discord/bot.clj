@@ -126,7 +126,8 @@
   [(cmp/action-row
     (cmp/select-menu
      "language-select"
-     [(cmp/select-option "English" "en" :emoji {:name "🇬🇧"})]))])
+     [(cmp/select-option "English" "en" :emoji {:name "🇬🇧"})
+      (cmp/select-option "Tiếng Việt" "vi" :emoji {:name "🇻🇳"})]))])
 
 (defhandler language-handler ["language"]
   {:keys [id token guild-id] {:keys [permissions]} :member}
