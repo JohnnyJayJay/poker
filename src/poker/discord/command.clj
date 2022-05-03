@@ -24,4 +24,7 @@
      "Displays information about the bot")
     (cmd/sub-command
      "language"
-     "Set the bot language for your server")]))
+     "Set the bot language for your server")
+    (cmd/sub-command
+     "cancel"
+     "Cancel the game in this channel")]))

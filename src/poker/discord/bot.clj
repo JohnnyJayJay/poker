@@ -19,7 +19,7 @@
             [slash.component.structure :as cmp]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [clojure.core.async :refer [chan go <!]])
+            [clojure.core.async :refer [chan go <!] :as a])
   (:gen-class))
 
 (defn validate-opts [defaults opts]
@@ -94,6 +94,25 @@
             (->> {:content (i18n/loc-msg guild-id :bot/missing-permissions)}
                  rsp/channel-message
                  (respond-interaction id token))))))))
+
+(defhandler cancel-handler ["cancel"]
+  {:keys [id token channel-id guild-id] {:keys [permissions]} :member :as _interaction}
+  _
+  (->>
+   (if (dp/has-permission-flag? :manage-messages permissions)
+     (let [{active-abort :abort-chan :as active} (@active-games channel-id)
+           {waiting-abort :abort-chan :as waiting} (@waiting-games channel-id)]
+       (if (or active waiting)
+         ;; send abort signal to waiting and active game if they exist and remove them from active and waiting maps
+         (do
+           (some-> active-abort a/close!)
+           (some-> waiting-abort a/close!)
+           (swap! active-games dissoc channel-id)
+           (swap! waiting-games dissoc channel-id)
+           {:content (i18n/loc-msg guild-id :command.cancel/success)})
+         {:content (i18n/loc-msg guild-id :command.cancel/no-game) :flags 64}))
+     {:content (i18n/loc-msg guild-id :command.general/no-perms) :flags 64}))
+  (let [game ()]))
 
 
 (defhandler info-handler ["info"]

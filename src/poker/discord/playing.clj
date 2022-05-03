@@ -129,7 +129,7 @@
       (respond-interaction id token (-> {:content (i18n/loc-msg guild-id :playing.move.raise/passed)} rsp/channel-message rsp/ephemeral)))))
 
 (defn game-loop! [bundle timeout game]
-  (go-loop [{:keys [state channel-id move-chan] :as game} game]
+  (go-loop [{:keys [state channel-id move-chan abort-chan] :as game} game]
     ;; Show community cards and pots
     (dr/create-message! rest-conn channel-id :content (disp/game-state-message bundle game))
     (if (poker/end? game)
@@ -145,7 +145,11 @@
         ;; Update game state for the outside
         (swap! active-games assoc channel-id (assoc game :message-id (:id msg)))
         (a/alt!
-          ;; Either player times out (no move)
+          ;; When external abort signal is received
+          abort-chan (do
+                       (dr/edit-message! rest-conn channel-id (:id msg) :components [])
+                       nil)
+          ;; otherwise, either player times out (no move)
           (a/timeout timeout) (do
                                 (dr/create-message! rest-conn channel-id :content (disp/timed-out-message bundle game))
                                 (recur (poker/fold game)))
@@ -179,7 +183,7 @@
         game (-> (if prev-round
                    (poker/restart-game prev-round participants cards budgets)
                    (poker/start-new-game big-blind small-blind participants cards budgets))
-                 (assoc :channel-id channel-id :move-chan (a/chan)))
+                 (assoc :channel-id channel-id :move-chan (a/chan) :abort-chan (a/chan)))
         guild-bundle (i18n/guild-bundle guild-id)]
     (swap! active-games assoc channel-id game)
     (notify-players! guild-bundle game)

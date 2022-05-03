@@ -120,7 +120,7 @@
               (init-new-round! result opts guild-id channel-id host)
               (do
                 (swap! active-games dissoc channel-id)
-                (dr/create-message! rest-conn channel-id :content (i18n/loc-msg guild-id :bot/general-error))))))))))
+                #_(dr/create-message! rest-conn channel-id :content (i18n/loc-msg guild-id :bot/general-error))))))))))
 
 (defn init-game! [id token {:keys [wait-time] :as opts} guild-id channel-id initiator-id]
   (go
