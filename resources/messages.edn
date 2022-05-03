@@ -17,6 +17,8 @@
  :hand/straight-flush "Straight flush",
  :hand/royal-flush "Royal flush",
 
+ :command.general/no-perms "❌ You don't have permission to do that"
+
  :command.holdem/deprecation-notice "Poker got an upgrade! Because of this, you are no longer able to use the old, ugly `holdem!` command.
 **Games are now started using `/holdem`**.
 **If this doesn''t work for you**, the bot most likely lacks authorisation. Go ahead and fix that by clicking the button below (**only server admins can do this!**), and then reload Discord (Ctrl + R).",
@@ -37,6 +39,9 @@
  :command.language/select "Select your language",
  :command.language/updated "✅ Language settings updated!",
  :command.language/no-perms "Only server managers are allowed to change the language!"
+
+ :command.cancel/success "✅ The game in this channel was cancelled.",
+ :command.cancel/no-game "❌ There is no game in this channel."
 
  :waiting/new-game "{0} wants to play a game of Poker! Everybody will start with {1, number, integer} chips.",
  :waiting/existing-game "This round of the game is over, but you can keep playing!

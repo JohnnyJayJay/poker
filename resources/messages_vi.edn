@@ -17,6 +17,8 @@
  :hand/straight-flush "Thùng phá sảnh",
  :hand/royal-flush "Thùng phá sảnh hoàng kim",
 
+ :command.general/no-perms "❌ Bạn không có quyền hạn để thực hiện"
+
  :command.holdem/deprecation-notice "Poker đã có phiên bản mới! Hãy cập nhật ngay để sử dụng những tính năng mới nhất.
 **Game được bắt đầu bằng cách sử dụng lệnh `/holdem`**.
 **Nếu không hoạt động**, có thể bot chưa được cung cấp quyền. Hãy click nút bên dưới (**chỉ admin server mới có thể sử dụng!**), sau đó hãy load lại trang Discord (Ctrl + R).",
@@ -37,6 +39,9 @@
  :command.language/select "Chọn ngôn ngữ của bạn",
  :command.language/updated "✅ Đã cập nhật ngôn ngữ!",
  :command.language/no-perms "Chỉ có người quản lý server mới có thể đổi ngôn ngữ!"
+
+ :command.cancel/success "✅ Game trong kênh này đã bị huỷ bỏ.",
+ :command.cancel/no-game "❌ Không có game đang chạy trong kênh này."
 
  :waiting/new-game "{0} muốn chơi game Poker! Mọi người sẽ bắt đầu với {1, number, integer} chips.",
  :waiting/existing-game "Đã kết thúc vòng game, nhưng bạn có thể tiếp tục chơi!
