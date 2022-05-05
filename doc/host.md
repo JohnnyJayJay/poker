@@ -31,3 +31,11 @@ I assume that you are familiar with how Discord bots work and how to create a Di
 ```
 3. In the project directory, run `docker-compose run poker lein run update`, or, if you don't use docker, `lein run update`. This command registers the slash commands of this bot. It should be run whenever you update to a version of poker that changes the set of commands.
 4. You can now run the bot using `docker-compose up -d` or `lein run`.
+
+## Updating
+To update poker to a newer version published to GitHub, do the following:
+
+1. `git pull`
+2. `docker-compose down`
+3. Update slash commands if applicable (see [Setup](#Setup))
+4. `docker-compose up -d --build`
