@@ -1,10 +1,11 @@
 (ns poker.discord.bot
-  (:require [poker.discord.state :refer [active-games waiting-games event-ch rest-conn ws-conn config event-pool]]
+  (:require [poker.discord.state :refer [active-games waiting-games event-ch rest-conn ws-conn config event-pool app-id]]
             [poker.discord.waiting :as waiting]
             [poker.discord.i18n :as i18n]
             [poker.discord.util :refer [respond-interaction]]
             [poker.discord.component :refer [handle-component-interaction]]
             [poker.discord.playing :refer [handle-raise-submit]]
+            [poker.discord.command :as cmds]
             [mount.core :as mount]
             [discljord.connections :as dc]
             [discljord.formatting :as dfmt]
@@ -111,8 +112,9 @@
            (swap! waiting-games dissoc channel-id)
            {:content (i18n/loc-msg guild-id :command.cancel/success)})
          {:content (i18n/loc-msg guild-id :command.cancel/no-game) :flags 64}))
-     {:content (i18n/loc-msg guild-id :command.general/no-perms) :flags 64}))
-  (let [game ()]))
+     {:content (i18n/loc-msg guild-id :command.general/no-perms) :flags 64})
+   rsp/channel-message
+   (respond-interaction id token)))
 
 
 (defhandler info-handler ["info"]
@@ -188,7 +190,7 @@
 
 (def interaction-handlers
   (assoc slash-ws/gateway-defaults
-         :application-command (paths #'holdem-handler (group ["poker"] #'info-handler #'language-handler))
+         :application-command (paths #'holdem-handler (group ["poker"] #'info-handler #'language-handler #'cancel-handler))
          :message-component #'handle-component-interaction
          :modal-submit #'handle-raise-submit))
 
@@ -197,10 +199,19 @@
    :message-create [#'handle-message-command]
    :ready [#'handle-ready]})
 
-(defn -main [& _args]
+
+
+(defn -main [& [arg]]
+
   (log/info "Starting bot")
   (mount/start)
   (log/info "Logged in as" (dfmt/user-tag @(dr/get-current-user! rest-conn)))
+  (when (= arg "update")
+    (log/info "Updating global slash commands")
+    (let [response @(dr/bulk-overwrite-global-application-commands! rest-conn app-id [cmds/holdem-command cmds/poker-command])]
+      (if (instance? java.lang.Exception response)
+        (log/error response "Updating commands was not successful.")
+        (log/info "Global slash commands have been updated"))))
   (try
     (devents/message-pump! event-ch #(.execute event-pool (fn [] (devents/dispatch-handlers event-handlers %1 %2))))
     (finally (mount/stop))))
