@@ -202,7 +202,6 @@
 
 
 (defn -main [& [arg]]
-
   (log/info "Starting bot")
   (mount/start)
   (log/info "Logged in as" (dfmt/user-tag @(dr/get-current-user! rest-conn)))
@@ -211,7 +210,10 @@
     (let [response @(dr/bulk-overwrite-global-application-commands! rest-conn app-id [cmds/holdem-command cmds/poker-command])]
       (if (instance? java.lang.Exception response)
         (log/error response "Updating commands was not successful.")
-        (log/info "Global slash commands have been updated"))))
+        (do
+          (log/info "Global slash commands have been updated")
+          (mount/stop)
+          (System/exit 0)))))
   (try
     (devents/message-pump! event-ch #(.execute event-pool (fn [] (devents/dispatch-handlers event-handlers %1 %2))))
     (finally (mount/stop))))
