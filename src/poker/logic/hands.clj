@@ -19,20 +19,20 @@
       (if (= (count matching-ranks) amount)
         (sort-by (juxt (comp boolean matching-ranks :rank) :index) compare-desc hand)))))
 
-(defn high-card
+(defn highcard
   "Hand-matching function for high-card hands.
   Never returns nil, because every hand is a valid high-card hand.
   Just sorts the cards in descending order."
   [hand]
   (sort-by :index compare-desc hand))
 
-(def one-pair
+(def pair
   "Hand-matching function for one pair-hands.
   Returns an appropriately sorted version of the given cards or nil
   if the cards do not contain exactly one pair."
   (occurrence-fn 2 1))
 
-(def two-pair
+(def two-pairs
   "Hand-matching function for two pair-hands.
   Returns an appropriately sorted version of the given cards or nil
   if the cards do not contain exactly two pairs."
@@ -55,7 +55,7 @@
   Returns an appropriately sorted version of the given cards or nil
   if the cards do not contain a full house (one pair and three of a kind)."
   [hand]
-  (and (one-pair hand) (three-of-a-kind hand)))
+  (and (pair hand) (three-of-a-kind hand)))
 
 (defn flush
   "Hand-matching function for flush-hands.
@@ -63,7 +63,7 @@
   if the cards do not represent a flush (all cards having the same suit)."
   [[{suit :suit} :as hand]]
   (if (every? #{suit} (map :suit hand))
-    (high-card hand)))
+    (highcard hand)))
 
 (defn- all-neighbours
   "Returns the given cards if they are in descending order, nil if not."
@@ -83,7 +83,7 @@
   Uses high rules, i.e. if the hand contains an ace, it will be treated
   as the highest card first and then the lowest card if no match could be found."
   [hand]
-  (let [hand (high-card hand)]
+  (let [hand (highcard hand)]
     (or (all-neighbours hand)
         (if-let [ace (first (filter #(= (:rank %) :ace) hand))]
           (let [hand (concat (drop 1 hand) (list (assoc ace :index -1)))]
@@ -106,13 +106,13 @@
   (reverse
     (map-indexed
       (fn [index match-sym]
-        {:name     (string/capitalize (string/replace (name match-sym) \- \ ))
+        {:name     (keyword "hand" (name match-sym))
          :id       (keyword (name match-sym))
          :index    index
          :match-fn (resolve match-sym)})
-      '[high-card
-        one-pair
-        two-pair
+      '[highcard
+        pair
+        two-pairs
         three-of-a-kind
         straight
         flush

@@ -19,6 +19,8 @@ This is (roughly) how the logic part is used:
 (poker/all-in game)
 ```
 
+It is currently not published as a library, only used as the backbone for the associated Discord bot.
+
 ## Bot
 
 [![Discord Bots](https://top.gg/api/widget/461791942779338762.svg)](https://top.gg/bot/461791942779338762)
@@ -29,32 +31,18 @@ Here are a few impressions of what it looks like:
 ![](https://i.imgur.com/FeJTYD5.png)
 ![](https://i.imgur.com/yAWQtXn.png)
 
-The bot is public, you can invite it [here](https://discord.com/api/oauth2/authorize?client_id=461791942779338762&permissions=329792&scope=bot).
+Active work is also being done on translating this bot. More about that at the link below.
 
-It is currently not guaranteed to be online 24/7 since some things may still change, but it should be online 99% of the time now.
+Some relevant links:
+- [Invite link](https://discord.com/api/oauth2/authorize?client_id=461791942779338762&permissions=329792&scope=bot) to add the public version hosted by myself to your Discord server
+- [Support server](https://discord.gg/npEXyQt) for chatter, bug reports and suggestions
+- [How to host this bot yourself](./doc/host.md)
+- [How to help with translation](./doc/i18n.md)
 
-## Running
-
-You are also free to host it yourself (either manually or using Docker):
-
-1. Get [Leiningen](https://leiningen.org/) (not needed for Docker)
-2. Clone this repo
-3. Put a `cofig.clj` file in the repo that looks like this:
-   
-   ```clj
-   {:token           "TOKEN"
-   :default-wait-time       25000   ; The default number of milliseconds to wait for players when starting a game
-   :default-buy-in  1000    ; The default buy-in if none is specified when running "holdem!"
-   :default-timeout         180000} ; The default number of milliseconds after which the current player, if they have not made a move, will fold automatically
-   ```
-4. Run `lein run` or `docker-compose up`
-
-Note that your bot needs to be on the [playing cards emoji server](https://discord.gg/sJB2xjK) for it to work out of the box. I am not the owner of that server, so I can't help with adding your bot there. Please be mindful of the server owner and don't annoy them.\
-You can also use your own custom emojis. For that, you'll have to modify the emoji ids in `poker.discord.display`.
 
 ## License
 
-Copyright © 2020-2021 JohnnyJayJay
+Copyright © 2020-2022 JohnnyJayJay
 
 This program and the accompanying materials are made available under the
 terms of the Hippocratic License 2.1 which is available at

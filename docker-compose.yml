@@ -2,5 +2,6 @@ version: "3.9"
 services:
   poker:
     build: .
-    restart: on-failure
-
+    volumes:
+      - ./data:/usr/src/poker/data
+    restart: unless-stopped
