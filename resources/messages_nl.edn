@@ -1,0 +1,96 @@
+{:bot/general-error "❌ Er is iets fout gegaan. Probeer het opnieuw.",
+ :bot/missing-permissions "Het lijkt erop dat ik niet alle machtigingen heb die ik nodig heb. Ik moet *berichten kunnen verzenden* en *externe emoji's kunnen gebruiken*."
+
+ :term/community-cards "Tafel Kaarten",
+ :term/chip-amount "{0, choice, 0#geen fiches|1#1 fiche|1<{0, number, integer} fiches}",
+ :term/main-pot "Hoofdpot",
+ :term/side-pot "{0, number, integer}. zijpot"
+
+ :hand/highcard "Hoge kaarten",
+ :hand/pair "Paar",
+ :hand/two-pairs "Twee paar",
+ :hand/three-of-a-kind "Drie dezelfde",
+ :hand/straight "Straat",
+ :hand/flush "Flush",
+ :hand/full-house "Full house",
+ :hand/four-of-a-kind "Vier Dezelfde",
+ :hand/straight-flush "Straat met een flush",
+ :hand/royal-flush "Koninklijke flush",
+
+ :command.general/no-perms "❌ Je hebt geen toestemming om dat te doen"
+
+ :command.holdem/deprecation-notice "Poker GG heeft een upgrade gekregen! Hierdoor kun je het oude, lelijke `holdem!`-commando niet meer gebruiken. 
+**Games worden nu gestart met `/holdem`**. 
+**Als dit niet voor u werkt**, heeft de bot hoogstwaarschijnlijk geen autorisatie. Ga je gang en repareer dat door op de onderstaande knop te klikken (**alleen serverbeheerders kunnen dit doen!**) en laad Discord opnieuw (Ctrl + R).",
+ :command.holdem/commands-button "Slash-commands inschakelen"
+
+ :command.game/active-game "Er is al een actief spel in dit kanaal. Gebruik een ander kanaal of een thread om een nieuw spel te starten. Als er geen andere kanalen zijn neem contact op met de **Server Beheerders**!",
+ :command.game/waiting-game "Er is al een wachtspel in dit kanaal. Sluit je daar bij aan of gebruik een ander kanaal of thread om een ​​ander spel te starten.",
+ :command.game/arg-error "Er is iets mis met je argumenten:",
+ :command.game.error/blinds-proportion "❌ Small blind moet kleiner zijn dan de big blind.",
+ :command.game.error/blinds-buy-in "❌ Small en big blind moeten kleiner zijn dan de buy-in.",
+
+ :command.info/message "Hoi! Ik ben een gratis bot waarmee jij en je vrienden poker tegen elkaar kunnen spelen in Discord. Voer gewoon `/holdem` uit om te beginnen!",
+ :command.info/add "Voeg mij toe aan je server"
+
+ :command.language/select "Selecteer je taal",
+ :command.language/updated "✅ Taalinstellingen bijgewerkt!",
+ :command.language/no-perms "Alleen serverbeheerders mogen de taal wijzigen!"
+
+ :command.cancel/success "✅ De game op dit kanaal is geannuleerd.",
+ :command.cancel/no-game "❌ Er is geen game op dit kanaal."
+
+ :waiting/new-game "{0} wil een spelletje poker spelen! Iedereen zal beginnen met {1, number, integer} fiches.",
+ :waiting/existing-game "Deze ronde van het spel is voorbij, maar je kunt blijven spelen! 
+Spelers van de laatste ronde, jullie hebben nu:
+{0}
+
+Hiermee ga je de volgende ronde in als je doorspeelt.",
+
+ :waiting/open-game "Dit spel staat ook open voor nieuwe spelers! Ze zullen beginnen met {0, number, integer} fiches."
+ :waiting/msg "{1, choice, 0#Er kunnen geen spelers meer meedoen.|1#Er kan nog één speler meedoen!|1<{1, number, integer} meer spelers kunnen meedoen!}
+Huidige Spelers: {2}
+
+{0} is de leider van het spel en kan het onmiddellijk afbreken of starten. 
+Anders begint het spel {3}.",
+ :waiting/join "Meedoen",
+ :waiting/leave "Vertrekken",
+ :waiting/abort "Afbreken",
+ :waiting/start "Begin nu",
+ :waiting/not-host "Dat kun je niet doen omdat je niet de leider van het spel bent.",
+ :waiting/aborted "Het spel werd afgebroken.",
+ :waiting/not-enough-players "Niet genoeg spelers.",
+ :waiting/full "Het spel is vol. Je kunt pas lid worden als iemand anders vertrekt.",
+ :waiting/no-new-players "Dit spel staat niet open voor nieuwe spelers",
+ :waiting/already-joined "Je hebt al meegedaan aan dit spel!",
+ :waiting/didnt-join "Je hebt niet deelgenomen aan dit spel!"
+
+ :playing/notification "Hier zijn je kaarten voor het spel {0}:",
+ :playing/small-blind "{0} plaatst de small blind van **{1, choice, 1#een fiche|1<{1, number, integer} fiches**}.",
+ :playing/big-blind "{0} plaatst de grote blind van **{1, number, integer} fiches**.",
+ :playing/turn "Het is jouw beurt, {0}!\nWat zou je willen doen? Je hebt nog {1, choice, 1#**een fiche**|1<{1, number, integer} fiches}.",
+ :playing/not-your-turn "Het is niet jouw beurt.",
+ :playing/not-a-player "Je maakt geen deel uit van dit spel!",
+ :playing.move/fold "Passen",
+ :playing.move/check "Check",
+ :playing.move/call "Meegaan",
+ :playing.move/raise "Verhoog",
+ :playing.move/all-in "Alles",
+ :playing.move.raise/min "min.",
+ :playing.move.raise/amount "Verhoog het bedrag",
+ :playing.move.raise/constraints "Een bedrag tussen {0, number, integer} en {1, number, integer}",
+ :playing.move.raise/invalid-amount "Ongeldig verhogingsbedrag.",
+ :playing.move.raise/passed "Je tijd om te verhogen is verstreken.",
+ :playing/view-cards "Hand bekijken",
+
+ :playing.move.done/fold "{0} past.",
+ :playing.move.done/check "{0} checkt.",
+ :playing.move.done/call "{0} gaat mee {1, number, integer}.",
+ :playing.move.done/raise "{0} verhoogd door {1, number, integer}.",
+ :playing.move.done/all-in "{0} gooit alles erop!",
+ :playing/auto-fold "{0} reageerde niet op tijd en past daarom automatisch.",
+ :playing/instant-win "Iedereen behalve {0} heeft gepast!\nZe winnen de hoofdpot van {1, choice, 1#1 fiche|1<{1, number, integer} fiches}.",
+ :playing/split "{0} verdeeld de {1} voor **{2, choice, 0#geen ... chips ... elk? :fronsend:|1#elk een fiche|1<{2, number, integer} fiches elk}**!",
+ :playing/single "{0} wint de {1} en krijgt **{2, choice, 1#een fiche|1<{2, number, integer} fiches}**!",
+ :playing/showdown "**Onthulling!** Laten we eens een kijkje nemen op de handen...",
+ :playing/conclusion "Dit betekent dat:"}
