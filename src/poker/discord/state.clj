@@ -21,7 +21,7 @@
   :start (async/chan (:buffer-size config)))
 
 (defstate ws-conn
-  :start (dg/connect-bot! (:token config) event-ch :intents #{:guild-messages})
+  :start (dg/connect-bot! (:token config) event-ch :intents #{})
   :stop (dg/disconnect-bot! ws-conn))
 
 ;; channel id -> {poker stuff, :move-chan chan, :channel-id id}
