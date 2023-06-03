@@ -8,7 +8,7 @@
   (:import (java.util.concurrent Executors ExecutorService)))
 
 (defstate config
-  :start (edn/read-string (slurp "config.clj")))
+  :start (edn/read-string (slurp "config.edn")))
 
 (defstate rest-conn
   :start (dr/start-connection! (:token config))

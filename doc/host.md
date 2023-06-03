@@ -12,7 +12,7 @@ I assume that you are familiar with how Discord bots work and how to create a Di
 ## Setup
 
 1. Clone this repository `git clone https://github.com/JohnnyJayJay/poker`
-2. In the directory root of the project, create a file called `config.clj` and enter the following:
+2. In the directory root of the project, create a file called `config.edn` and enter the following:
 
 ```clj
 {:token "YOUR BOT TOKEN HERE"
