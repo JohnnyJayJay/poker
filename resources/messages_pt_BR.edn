@@ -1,0 +1,99 @@
+{:bot/general-error "❌ Algo de errado aconteceu. Por favor tente novamente.",
+ :bot/missing-permissions "Parece que eu não possuo todas as permissões necessárias. Eu preciso conseguir *enviar mensagens* e *usar emojis externos*."
+
+ :term/community-cards "Cartas comunitárias",
+ :term/chip-amount "{0, choice, 0#sem fichas|1#1 ficha|1<{0, number, integer} fichas}",
+ :term/main-pot "Pote principal",
+ :term/side-pot "{0, number, integer}. pote secundário"
+
+ :hand/highcard "Carta alta",
+ :hand/pair "Par",
+ :hand/two-pairs "Dois pares",
+ :hand/three-of-a-kind "Trinca",
+ :hand/straight "Sequência",
+ :hand/flush "Flush",
+ :hand/full-house "Full house",
+ :hand/four-of-a-kind "Quadra",
+ :hand/straight-flush "Straight flush",
+ :hand/royal-flush "Royal flush",
+
+ :command.general/no-perms "❌ Você não tem permissão para fazer isso"
+
+ :command.holdem/deprecation-notice "Poker foi atualizado! Por conta disso, você não pode mais utilizar o velho e feio comando `holdem!`.
+**As partidas agora iniciam usando `/holdem`**.
+**Se isso não funcionar para você**, provavelmente o bot precisa de autorização. Vá em frente e ajuste isso clicando no botão abaixo (**somente admins do servidor podem fazer isso!**), e depois reinicie o Discord (Ctrl + R).",
+ :command.holdem/commands-button "Habilitar Slash Commands"
+
+ :command.game/active-game "Já existe uma partida ativa neste canal. Use um canal ou tópico diferente para iniciar uma nova partida.",
+ :command.game/waiting-game "Já existe uma partida pendente neste canal. Entre nesta partida ou use um canal ou tópico diferente para iniciar uma nova partida.",
+ :command.game/arg-error "Tem algo de errado com os seus argumentos:",
+ :command.game.error/blinds-proportion "❌ Small blind deve ser menor que o big blind.",
+ :command.game.error/blinds-buy-in "❌ Small e big blind devem ser menores que o buy-in.",
+
+ :command.info/message "Olá! Sou um bot gratuito e open source para você jogar Poker com seus amigos no Discord. Envie o comando `/holdem` para iniciar!",
+ :command.info/add "Adicione-me ao seu servidor",
+ :command.info/source "Veja meu código-fonte",
+ :command.info/server "Entre em meu servidor de suporte",
+ :command.info/support "Apoie-me"
+
+ :command.language/select "Selecione seu idioma",
+ :command.language/updated "✅ Configurações de idioma atualizadas!",
+ :command.language/no-perms "Somente admins do servidor podem alterar o idioma!"
+
+ :command.cancel/success "✅ A partida nesse canal foi cancelada.",
+ :command.cancel/no-game "❌ Não existe partida nesse canal."
+
+ :waiting/new-game "{0} quer jogar uma partida de Poker! Todos começarão com {1, number, integer} fichas.",
+ :waiting/existing-game "Essa rodada da partida terminou, mas vocês podem continuar jogando!
+Jogadores da última rodada, vocês agora têm:
+{0}
+
+Vocês iniciarão a próxima rodada com essa quantia se continuarem jogando.",
+
+ :waiting/open-game "Essa partida também está aberta para novos jogadores! Eles iniciarão com {0, number, integer} fichas."
+ :waiting/msg "{1, choice, 0#Nenhum jogador pode entrar.|1#Mais um jogador pode entrar!|1<{1, number, integer} mais jogadores podem entrar!}
+Jogadores atuais: {2}
+
+{0} é o dono da partida e pode abortar ou iniciar imediatamente.
+Do contrário, a partida vai iniciar {3}.",
+ :waiting/join "Entrar",
+ :waiting/leave "Sair",
+ :waiting/abort "Abortar",
+ :waiting/start "Iniciar agora",
+ :waiting/not-host "Você não pode fazer isso pois não é o dono da partida.",
+ :waiting/aborted "A partida foi abortada.",
+ :waiting/not-enough-players "Jogadores insuficientes.",
+ :waiting/full "A partida está lotada. Você não pode entrar até que alguém saia.",
+ :waiting/no-new-players "Essa partida não está aberta para novos jogadores",
+ :waiting/already-joined "Você já entrou nessa partida!",
+ :waiting/didnt-join "Você não entrou nessa partida!"
+
+ :playing/notification "Aqui estão as suas cartas para a partida em {0}:",
+ :playing/small-blind "{0} coloca o small blind de **{1, choice, 1#1 ficha|1<{1, number, integer} fichas**}.",
+ :playing/big-blind "{0} coloca o big blind de **{1, number, integer} fichas**.",
+ :playing/turn "É a sua vez, {0}!\nO que você quer fazer? Você ainda tem {1, choice, 1#**uma ficha**|1<{1, number, integer} fichas}.",
+ :playing/not-your-turn "Não é a sua vez.",
+ :playing/not-a-player "Você não está nessa partida!",
+ :playing.move/fold "Desistir",
+ :playing.move/check "Passar",
+ :playing.move/call "Pagar",
+ :playing.move/raise "Aumentar",
+ :playing.move/all-in "All-in",
+ :playing.move.raise/min "mín.",
+ :playing.move.raise/amount "Quantia do aumento",
+ :playing.move.raise/constraints "Uma quantia entre {0, number, integer} e {1, number, integer}",
+ :playing.move.raise/invalid-amount "Quantia de aumento inválida.",
+ :playing.move.raise/passed "Seu tempo para aumentar terminou.",
+ :playing/view-cards "Ver cartas fechadas",
+
+ :playing.move.done/fold "{0} desiste.",
+ :playing.move.done/check "{0} passa.",
+ :playing.move.done/call "{0} paga {1, number, integer}.",
+ :playing.move.done/raise "{0} aumenta em {1, number, integer}.",
+ :playing.move.done/all-in "{0} vai all-in!",
+ :playing/auto-fold "{0} não responde a tempo, e por isso desiste automaticamente.",
+ :playing/instant-win "Todos exceto {0} desistem!\nEle vence o pote de {1, choice, 1#1 ficha|1<{1, number, integer} fichas}.",
+ :playing/split "{0} divide o {1} em **{2, choice, 0#nenhuma... ficha... para cada? :frowning:|1#1 ficha para cada|1<{2, number, integer} fichas para cada}**!",
+ :playing/single "{0} vence o {1} e recebe **{2, choice, 1#1 ficha|1<{2, number, integer} fichas}**!",
+ :playing/showdown "**Showdown!** Vamos ver as mãos...",
+ :playing/conclusion "Isso significa que:"}
